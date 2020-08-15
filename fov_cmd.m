@@ -19,14 +19,13 @@
 %%%   arg.magmin=11;                          % Limit Magnitudes to min; see .magtype
 %%%   arg.j2000=<anything>                    % Vertices are in J2000, not ICRS (not yet implemented)
 %%%   arg.buffer=0.001                        % Add buffer around FOV,degrees (not yet implemented)
-%%%   arg.ppm=<anything>                      % Include Parallax and Proper Motions in returned data
-%%%   arg.mags=<anything>                     % Include all phot_*_mean_mag values in returned data
-%%%   arg.heavy=<anything>                    % Include errors and corr. coeffs, *_error, *_corr
+%%%   arg.ppm=1                               % Include Parallax and Proper Motions in returned data
+%%%   arg.mags=1                              % Include all phot_*_mean_mag values in returned data
+%%%   arg.heavy=1                             % Include errors and corr. coeffs, *_error, *_corr
 %%%
 %%%   arg.gaiasqlite3='dirpath/gaia.sqlite3'  % Use this Gaia SQLite3 file
 %%%                                           % N.B. Must end with .sqlite3
-%%%                                           % Also *_heavy.sqlite3
-%%%                                           % N.B. Gaia heavy not yet used
+%%%                                           % Also *_heavy.sqlite3 if arg.heavy is present
 %%%
 %%% Returns
 %%%
