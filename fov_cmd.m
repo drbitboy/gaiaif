@@ -21,6 +21,7 @@
 %%%   arg.buffer=0.001                        % Add buffer around FOV,degrees (not yet implemented)
 %%%   arg.ppm=<anything>                      % Include Parallax and Proper Motions in returned data
 %%%   arg.mags=<anything>                     % Include all phot_*_mean_mag values in returned data
+%%%   arg.heavy=<anything>                    % Include errors and corr. coeffs, *_error, *_corr
 %%%
 %%%   arg.gaiasqlite3='dirpath/gaia.sqlite3'  % Use this Gaia SQLite3 file
 %%%                                           % N.B. Must end with .sqlite3
@@ -31,14 +32,17 @@
 %%%
 %%%   - array of per-star data as objects, sorted by increasing mean magnitude
 %%%
-%%%     - arr{index}.mean_mag  % Mean magnitude of type requested (default = g)
-%%%     - arr{index}.ra        % Nominal RA of star, deg, 2015.5 epoch
-%%%     - arr{index}.dec       % Nominal Dec of star, deg, 2015.5 epoch
-%%%     - arr{index}.offset    % Database offset, integer
-%%%     - arr{index}.parallax  % Parallax, mas, if requested (.ppm)
-%%%     - arr{index}.pmra      % Proper Motion RA, mas/y, if requested (.ppm)
-%%%     - arr{index}.pmdec     % Proper Motion Dec, mas/y, if requested (.ppm)
-%%%     - arr{index}.phot_*    % Light database mean magnitudes, if requested (.mags)
+%%%     - arr{index}.mean_mag   % Mean magnitude of type requested (default = g)
+%%%     - arr{index}.ra         % Nominal RA of star, deg, 2015.5 epoch
+%%%     - arr{index}.dec        % Nominal Dec of star, deg, 2015.5 epoch
+%%%     - arr{index}.offset     % Database offset, integer
+%%%     - arr{index}.parallax   % Parallax, mas, if requested (.ppm)
+%%%     - arr{index}.pmra       % Proper Motion RA, mas/y, if requested (.ppm)
+%%%     - arr{index}.pmdec      % Proper Motion Dec, mas/y, if requested (.ppm)
+%%%     - arr{index}.phot_*     % Light database mean magnitudes, if requested (.mags)
+%%%     - arr{index}.source_id  % Source ID from Gaia; 64-bit, if requested (.heavy)
+%%%     - arr{index}.*_error    % Standard errors, if requested (.heavy)
+%%%     - arr{index}.*_corr     % Correlation coefficients, if requested (.heavy)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%
 %%% Sample Usage:
@@ -92,11 +96,13 @@ for arg=dotted.fov;
 endfor
 
 %%% - Optional fields
+try dotted.heavy                                           ;
+    pycmd = [ pycmd ' --heavy']                            ; catch end
 try dotted.mags                                            ;
     pycmd = [ pycmd ' --mags']                             ; catch end
 try dotted.ppm                                             ;
     pycmd = [ pycmd ' --ppm']                              ; catch end
-try dotted.j2000 ;
+try dotted.j2000                                           ;
     pycmd = [ pycmd ' --j2000']                            ; catch end
 try pycmd = [ pycmd ' --limit=' num2str(dotted.limit)]     ; catch end
 try pycmd = [ pycmd ' --mag-max=' num2str(dotted.magmax)]  ; catch end

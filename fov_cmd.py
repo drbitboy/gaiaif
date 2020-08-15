@@ -39,6 +39,7 @@ Other options:
   --buffer=pad (around convex FOV or RA,Dec box ;not yet implemented)
   --ppm (Retrieve Parallax and Proper Motions)
   --mags (Retrieve all magnitudes, phot_*_mean_mag)
+  --heavy (Retrieve source_id, errors and corr. coeffs, , *error, *corr)
 
 """
 
@@ -70,6 +71,7 @@ def do_main(argv):
   use_j2000 = False
   get_ppm = False
   get_mags = False
+  get_heavy = False
   fov_vertices = []
 
   for arg in argv:
@@ -109,6 +111,10 @@ def do_main(argv):
       get_mags = True
       continue
 
+    if '--heavy' == arg:
+      get_heavy = True
+      continue
+
     if arg.startswith('--buffer='):
       radec_buffer = float(arg[9:])
       sys.stderr.write('Warning:  RA,DEC buffer not yet implemented\n')
@@ -123,14 +129,18 @@ def do_main(argv):
   ### Build Gaia heavy database path, build FOV
   fov = gifu.FOV(fov_vertices)
 
-  if do_debug: pprint.pprint(locals())
-
   gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
-                     ,get_ppm,get_mags
+                     ,get_ppm,get_mags,get_heavy
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
              ]
+
+  if do_debug:
+    pprint.pprint(locals(),stream=sys.stderr)
+    print('========',file=sys.stderr)
+    for gaiasql in gaiasqls: print(gaiasql.query,file=sys.stderr)
+    print('========',file=sys.stderr)
 
   rtn_stars = list()
 
@@ -160,6 +170,7 @@ def do_main(argv):
                          ,use_j2000=use_j2000
                          ,get_ppm=get_ppm
                          ,get_mags=get_mags
+                         ,get_heavy=get_heavy
                          ,fov_vertices=fov_vertices
                          ,fov_type=fov.fovtype
                          )
@@ -172,15 +183,18 @@ def do_main(argv):
 ########################################################################
 class GAIASQL(object):
   def __init__(self,gaia_sl3,lomag,himag,mag_type
-              ,get_ppm,get_mags
+              ,get_ppm,get_mags,get_heavy
               ,ralo,rahi,declo,dechi
               ):
     self.gaia_sl3 = gaia_sl3
     self.gaia_heavy_sl3 = '{0}_heavy.sqlite3'.format(gaia_sl3[:-8])
     (self.lomag,self.himag,self.mag_type
-    ,self.get_ppm,self.get_mags
+    ,self.get_ppm,self.get_mags,self.get_heavy
     ,self.ralo,self.rahi,self.declo,self.dechi
-    ,) = lomag,himag,mag_type,get_ppm,get_mags,ralo,rahi,declo,dechi
+    ,) = (lomag,himag,mag_type
+         ,get_ppm,get_mags,get_heavy
+         ,ralo,rahi,declo,dechi
+         ,)
     assert self.mag_type in mag_types
 
     self.query_parameters = dict(lomag=self.lomag
@@ -190,27 +204,50 @@ class GAIASQL(object):
                                 ,declo=self.declo
                                 ,dechi=self.dechi
                                 )
-    get_ppm_columns = """
+    ppm_columns = """
       ,gaialight.parallax
       ,gaialight.pmra
       ,gaialight.pmdec"""
 
-    get_mags_columns = """
+    mags_columns = """
       ,gaialight.phot_g_mean_mag
       ,gaialight.phot_bp_mean_mag
       ,gaialight.phot_rp_mean_mag"""
+
+    heavy_join = """
+INNER JOIN dbheavy.gaiaheavy
+ ON gaiartree.offset=dbheavy.gaiaheavy.offset
+"""
+    heavy_columns = """
+      ,gaiaheavy.source_id
+      ,gaiaheavy.ra_error
+      ,gaiaheavy.dec_error
+      ,gaiaheavy.parallax_error
+      ,gaiaheavy.pmra_error
+      ,gaiaheavy.pmdec_error
+      ,gaiaheavy.ra_dec_corr
+      ,gaiaheavy.ra_parallax_corr
+      ,gaiaheavy.ra_pmra_corr
+      ,gaiaheavy.ra_pmdec_corr
+      ,gaiaheavy.dec_parallax_corr
+      ,gaiaheavy.dec_pmra_corr
+      ,gaiaheavy.dec_pmdec_corr
+      ,gaiaheavy.parallax_pmra_corr
+      ,gaiaheavy.parallax_pmdec_corr
+      ,gaiaheavy.pmra_pmdec_corr"""
 
     self.query0 = """
 SELECT gaialight.phot_{0}_mean_mag as mean_mag
       ,gaiartree.ralo as ra
       ,gaiartree.declo as dec
-      ,gaiartree.offset{3}{4}
+      ,gaiartree.offset{3}{4}{5}
 
 FROM gaiartree
 
 INNER JOIN gaialight
  ON gaiartree.offset=gaialight.offset
 {1}
+{6}
 
 WHERE gaiartree.ralo <= :rahi
   AND gaiartree.rahi >= :ralo
@@ -224,8 +261,10 @@ ORDER BY phot_{0}_mean_mag
 """.format(self.mag_type
           ,'{extra_join_light_on}'
           ,'{extra_mag_limits}'
-          ,get_ppm and get_ppm_columns or ''
-          ,get_mags and get_mags_columns or ''
+          ,self.get_ppm and ppm_columns or ''
+          ,self.get_mags and mags_columns or ''
+          ,self.get_heavy and heavy_columns or ''
+          ,self.get_heavy and heavy_join or ''
           )
 
     if None is self.lomag:
@@ -242,8 +281,10 @@ ORDER BY phot_{0}_mean_mag
     varself = vars(self)
     self.query = self.query0.format(**vars(self))
     self.cursor = sl3.connect(self.gaia_sl3).cursor()
+    if self.get_heavy:
+      self.cursor.execute("""ATTACH '{0}' as dbheavy""".format(self.gaia_heavy_sl3))
     self.cursor.execute(self.query,self.query_parameters)
-    self.column_names = [descrs[0] for descrs in self.cursor.description]
+    self.column_names = [descs[0] for descs in self.cursor.description]
     self.use___next = hasattr(self.cursor,'__next__')
     self.done = False
     self.count = 0
