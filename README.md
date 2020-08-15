@@ -1,6 +1,6 @@
 # Interfaces to Gaia Data Release 2 star catalog SQLite3 R-Tree database
 
-## Cf. https://github.com/drbitboy/Tycho2_SQLite_Rtree, sub-directory gaia
+## Cf. https://github.com/drbitboy/Tycho2_SQLite_Rtree/tree/master/gaia
 
 ## Sample database files of a very small subset of Gaia catalog are at https://github.com/drbitboy/gaia_subset
 
