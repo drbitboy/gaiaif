@@ -40,6 +40,9 @@ Other options:
   --ppm (Retrieve Parallax and Proper Motions)
   --mags (Retrieve all magnitudes, phot_*_mean_mag)
   --heavy (Retrieve source_id, errors and corr. coeffs, , *error, *corr)
+  --obspos=X,Y,Z (Observer position, km, triggers parallax correction)
+  --obsvel=VX,VY,VZ (Observer velocity, km/s, triggers stellar aberration correction)
+  --obsy=YYYY.ddd (Observer time, fractional year, triggers proper mostion correction)
 
 """
 
@@ -72,6 +75,7 @@ def do_main(argv):
   get_ppm = False
   get_mags = False
   get_heavy = False
+  obs_pos,obs_vel,obs_year = [None]*3
   fov_vertices = []
 
   for arg in argv:
@@ -120,6 +124,18 @@ def do_main(argv):
       sys.stderr.write('Warning:  RA,DEC buffer not yet implemented\n')
       continue
 
+    if arg.startswith('--obspos='):
+      obs_pos = list(map(float,arg[9:].split(',')))
+      continue
+
+    if arg.startswith('--obsvel='):
+      obs_vel = list(map(float,arg[9:].split(',')))
+      continue
+
+    if arg.startswith('--obsy='):
+      obs_year = float(arg[7:])
+      continue
+
     vertex = arg.split(',')
     if 1==len(vertex): vertex = vertex.pop()
     fov_vertices.append(vertex)
@@ -131,6 +147,7 @@ def do_main(argv):
 
   gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
                      ,get_ppm,get_mags,get_heavy
+                     ,obs_pos,obs_vel,obs_year
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
@@ -171,6 +188,9 @@ def do_main(argv):
                          ,get_ppm=get_ppm
                          ,get_mags=get_mags
                          ,get_heavy=get_heavy
+                         ,obs_pos=obs_pos
+                         ,obs_vel=obs_vel
+                         ,obs_year=obs_year
                          ,fov_vertices=fov_vertices
                          ,fov_type=fov.fovtype
                          )
@@ -184,15 +204,18 @@ def do_main(argv):
 class GAIASQL(object):
   def __init__(self,gaia_sl3,lomag,himag,mag_type
               ,get_ppm,get_mags,get_heavy
+              ,obs_pos,obs_vel,obs_year
               ,ralo,rahi,declo,dechi
               ):
     self.gaia_sl3 = gaia_sl3
     self.gaia_heavy_sl3 = '{0}_heavy.sqlite3'.format(gaia_sl3[:-8])
     (self.lomag,self.himag,self.mag_type
     ,self.get_ppm,self.get_mags,self.get_heavy
+    ,self.obs_pos,self.obs_vel,self.obs_year
     ,self.ralo,self.rahi,self.declo,self.dechi
     ,) = (lomag,himag,mag_type
          ,get_ppm,get_mags,get_heavy
+         ,obs_pos,obs_vel,obs_year
          ,ralo,rahi,declo,dechi
          ,)
     assert self.mag_type in mag_types

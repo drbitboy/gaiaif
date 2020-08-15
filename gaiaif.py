@@ -204,7 +204,7 @@ Usage:
     hang = float(fovvertices[1])
     fovtype = CIRCLETYPE
   except:
-    for pair in fovvertices[1:]
+    for pair in fovvertices[1:]:
       ra,dec = map(float,pair)
       assert ra<=360.0 and ra>=0.0
       assert dec<=90.0 and dec>=-90.0

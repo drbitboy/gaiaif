@@ -22,10 +22,25 @@
 %%%   arg.ppm=1                               % Include Parallax and Proper Motions in returned data
 %%%   arg.mags=1                              % Include all phot_*_mean_mag values in returned data
 %%%   arg.heavy=1                             % Include errors and corr. coeffs, *_error, *_corr
+%%%   arg.obspos=[X Y Z]                      % Observer position vector, km (Note 1)
+%%%   arg.obsvel=[VX VY VZ]                     % Observer velocity vector, km (Note 2)
+%%%   arg.obsy=YYYY.ddddd                     % Observer time, fractional year (Note 3)
 %%%
 %%%   arg.gaiasqlite3='dirpath/gaia.sqlite3'  % Use this Gaia SQLite3 file
 %%%                                           % N.B. Must end with .sqlite3
 %%%                                           % Also *_heavy.sqlite3 if arg.heavy is present
+%%%
+%%% Notes
+%%%
+%%% 1) arg.obspos is solar system barycentric-relative observer
+%%%    position; its presence triggers parallax correction
+%%%
+%%% 2) arg.obsvel is solar system barycentric-relative observer
+%%%    velocity; its presence triggers stellar aberration
+%%%    correction
+%%%
+%%% 3) arg.obsy is observer time, as a fractional year; it presence
+%%%    triggers Proper Motion correction e.g. 2015.5 => 2020-06-01
 %%%
 %%% Returns
 %%%
@@ -95,22 +110,32 @@ for arg=dotted.fov;
 endfor
 
 %%% - Optional fields
-try dotted.heavy                                           ;
-    pycmd = [ pycmd ' --heavy']                            ; catch end
-try dotted.mags                                            ;
-    pycmd = [ pycmd ' --mags']                             ; catch end
-try dotted.ppm                                             ;
-    pycmd = [ pycmd ' --ppm']                              ; catch end
-try dotted.j2000                                           ;
-    pycmd = [ pycmd ' --j2000']                            ; catch end
-try pycmd = [ pycmd ' --limit=' num2str(dotted.limit)]     ; catch end
-try pycmd = [ pycmd ' --mag-max=' num2str(dotted.magmax)]  ; catch end
-try pycmd = [ pycmd ' --mag-min=' num2str(dotted.magmin)]  ; catch end
-try pycmd = [ pycmd ' --mag-type=' dotted.magtype]         ; catch end
-try pycmd = [ pycmd ' --gaia-sqlite3=' dotted.gaiasqlite3] ; catch end
-try pycmd = [ pycmd ' --buffer=' num2str(dotted.buffer)]   ; catch end
+try dotted.heavy                                            ;
+    pycmd = [ pycmd ' --heavy']                             ; catch end
+try dotted.mags                                             ;
+    pycmd = [ pycmd ' --mags']                              ; catch end
+try dotted.ppm                                              ;
+    pycmd = [ pycmd ' --ppm']                               ; catch end
+try dotted.j2000                                            ;
+    pycmd = [ pycmd ' --j2000']                             ; catch end
+try pycmd = [ pycmd ' --limit=' num2str(dotted.limit)]      ; catch end
+try pycmd = [ pycmd ' --mag-max=' num2str(dotted.magmax)]   ; catch end
+try pycmd = [ pycmd ' --mag-min=' num2str(dotted.magmin)]   ; catch end
+try pycmd = [ pycmd ' --mag-type=' dotted.magtype]          ; catch end
+try pycmd = [ pycmd ' --gaia-sqlite3=' dotted.gaiasqlite3]  ; catch end
+try pycmd = [ pycmd ' --buffer=' num2str(dotted.buffer)]    ; catch end
+try pycmd = [ pycmd ' --obsy=' num2str(dotted.obsy)]        ; catch end
+try pycmd = [ pycmd ' --obspos=' num2str(dotted.obspos(1))] ;
+    pycmd = [ pycmd ','          num2str(dotted.obspos(2))] ;
+    pycmd = [ pycmd ','          num2str(dotted.obspos(3))] ; catch end
+try pycmd = [ pycmd ' --obsvel=' num2str(dotted.obsvel(1))] ;
+    pycmd = [ pycmd ','          num2str(dotted.obsvel(2))] ;
+    pycmd = [ pycmd ','          num2str(dotted.obsvel(3))] ; catch end
+try pycmd = [ pycmd ' --obsy=' num2str(dotted.obsy)]        ; catch end
 
 [cmd_status,cmd_stdout] = system(pycmd);
+
+printf('%s\n',cmd_stdout)
 
 return_object = loadjson(cmd_stdout);
 
