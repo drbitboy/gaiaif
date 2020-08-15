@@ -1,0 +1,6 @@
+Makefile.dotar
+__pycache__
+*.sqlite3
+gaiaif.tar.gz
+jsonlab/
+x.x
