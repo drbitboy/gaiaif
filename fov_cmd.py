@@ -50,6 +50,7 @@ import os
 import sys
 import pprint
 import sqlite3 as sl3
+import spiceypy as sp
 import gaiaif_util as gifu
 
 ### Allowed magnitude types
@@ -133,7 +134,16 @@ def do_main(argv):
       continue
 
     if arg.startswith('--obsy='):
-      obs_year = float(arg[7:])
+      obs_year_arg = arg[7:]
+      try:
+        obs_year = float(obs_year_arg)
+      except:
+        obs_year_s,msg = sp.tparse(arg[7:],99)
+        assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(arg,msg)
+        s_2015_5 = '2015-06-01T12:00:00'
+        obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
+        assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
+        obs_year = (obs_year_s - obs_2015_5_s) / sp.tyear()
       continue
 
     vertex = arg.split(',')
@@ -143,11 +153,14 @@ def do_main(argv):
     ### End of argument loop
 
   ### Build Gaia heavy database path, build FOV
-  fov = gifu.FOV(fov_vertices)
+  fov = gifu.FOV(fov_vertices
+                ,obs_pos=obs_pos
+                ,obs_vel=obs_vel
+                ,obs_year=obs_year
+                )
 
   gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
                      ,get_ppm,get_mags,get_heavy
-                     ,obs_pos,obs_vel,obs_year
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
@@ -191,6 +204,7 @@ def do_main(argv):
                          ,obs_pos=obs_pos
                          ,obs_vel=obs_vel
                          ,obs_year=obs_year
+                         ,obs_year_arg=obs_year_arg
                          ,fov_vertices=fov_vertices
                          ,fov_type=fov.fovtype
                          )
@@ -204,18 +218,15 @@ def do_main(argv):
 class GAIASQL(object):
   def __init__(self,gaia_sl3,lomag,himag,mag_type
               ,get_ppm,get_mags,get_heavy
-              ,obs_pos,obs_vel,obs_year
               ,ralo,rahi,declo,dechi
               ):
     self.gaia_sl3 = gaia_sl3
     self.gaia_heavy_sl3 = '{0}_heavy.sqlite3'.format(gaia_sl3[:-8])
     (self.lomag,self.himag,self.mag_type
     ,self.get_ppm,self.get_mags,self.get_heavy
-    ,self.obs_pos,self.obs_vel,self.obs_year
     ,self.ralo,self.rahi,self.declo,self.dechi
     ,) = (lomag,himag,mag_type
          ,get_ppm,get_mags,get_heavy
-         ,obs_pos,obs_vel,obs_year
          ,ralo,rahi,declo,dechi
          ,)
     assert self.mag_type in mag_types
@@ -314,10 +325,13 @@ ORDER BY phot_{0}_mean_mag
     self.cursor_next()
 
   def get_row(self):
-    return ((not (None is self.row))
-            and dict(zip(self.column_names,tuple(self.row)))
-            or None
-           ),self
+    if None is self.row:
+      rtn = None
+    else:
+      rtn = dict(zip(self.column_names,tuple(self.row)))
+      if 'source_id' in rtn: rtn['source_id'] = str(rtn['source_id'])
+
+    return rtn,self
 
   def cursor_next(self):
     """Get next .row from cursor"""

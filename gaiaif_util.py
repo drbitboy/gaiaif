@@ -8,6 +8,8 @@ try: dpr
 except:
   dpr = sp.dpr()
   rpd = sp.rpd()
+  rpmas = rpd / 36e6                ### Radian / milliarcsecond
+  aupkm = sp.convrt(1.,'km','au')   ### Astonomical Unit / kilometer
   recip_clight = 1.0 / sp.clight()
 
 
@@ -39,7 +41,7 @@ Attributes
   ,) = 'circle radecbox polygon'.split()
 
   ######################################################################
-  def __init__(self,fovraws):
+  def __init__(self,fovraws,obs_pos=None,obs_vel=None,obs_year=None):
     """Convert FOV definition in external inertial reference frame to an
 FOV definition in a local reference frame; also determine RA,Dec limits
 of FOV for use in star catalog lookup.
@@ -61,7 +63,11 @@ Argument
 
 """
     ### Get count of items in argument sequence; ensure it is 2 or more
-    self.fovraws = fovraws
+    (self.fovraws
+    ,self.obs_pos
+    ,self.obs_vel
+    ,self.obs_year
+    ,)= fovraws,obs_pos,obs_vel,obs_year
     self.L = len(fovraws)
     assert 1<self.L, 'Too few vertices in FOV'
 
@@ -396,7 +402,12 @@ Argument
   def __repr__(self): return str(self.fovraws)
 
   ########################################################################
-  def star_in_fov(self,vstar):
+  def star_in_fov(self
+                 ,vstar
+                 ,parallax_maspau=0.0
+                 ,pmra_maspy=0.0
+                 ,pmdec_maspy=0.0
+                 ):
     """Return True if the star (RA,Dec or xyz) argument is in the FOV
 
 Argument vstar is either an RA,Dec pair or a 3-vector
@@ -415,8 +426,32 @@ Argument vstar is either an RA,Dec pair or a 3-vector
         return True
       return False
 
-    ### Get inertial star vector without RA,Dec
-    uvinertial = parse_inertial(vstar,return_radec=False)
+    ### Get inertial star unit vector without RA,Dec
+    uvinertial = uvraw = parse_inertial(vstar,return_radec=False)
+
+    ### - Correct for Proper Motion
+    if (not (None is self.obs_year)) and (pmdec_maspy != 0.0 or pmra_maspy != 0.0):
+      uveast = sp.ucrss([0,0,1],uvraw)
+      uvnorth = sp.ucrss(uvraw,uveast)
+      uvinertial = sp.vhat(sp.vlcom3(self.obs_year*rpmas*pmdec_maspy,uvnorth
+                                    ,self.obs_year*rpmas*pmra_maspy/abs(uvraw[2]),uveast
+                                    ,1.0,uvinertial
+                                    )
+                          )
+
+    ### - Correct for Parallax
+    if (not (None is self.obs_pos)) and (parallax_maspau != 0.0):
+      uvinertial = sp.vhat(sp.vsub(uvinertial
+                                  ,sp.vscl(aupkm*parallax_maspau*rpmas,self.obspos)
+                                  )
+                          )
+
+    ### - Correct for Stellar Aberration
+    if not (None is self.obs_vel):
+      uvinertial = sp.vhat(sp.vadd(uvinertial
+                                  ,sp.vscl(recip_clight,self.obs_vel)
+                                  )
+                          )
 
     if self.fovtype == FOV.CIRCLETYPE:
       ##################################################################
@@ -501,8 +536,6 @@ Argument vstar is either an RA,Dec pair or a 3-vector
 
       if onepos: self.inwardsidenorms.append(norm)
       else     : self.inwardsidenorms.append(sp.vminus(norm))
-
-    print(dict(onepos=onepos,oneneg=oneneg))
 
     self.convex = onepos ^ oneneg
     return self.convex
@@ -599,7 +632,7 @@ Return RA,DEC (optional) and unit vector
     uvxyz = sp.radrec(1.0,ra*rpd,dec*rpd)
   else:
     ### Vertex has three items:  assume they are XYZ
-    assert 3==len(input_vertex),'XYZ input vector for vertex does not have 3 elements'
+    assert 3==len(input_vertex),'XYZ input vector [{0}] for vertex does not have 3 elements'.format(str(input_vertex))
     uvxyz = sp.vhat(sp.vpack(*map(float,input_vertex)))
     if return_radec: ra,dec = sp.vsclg(dpr,sp.recrad(uvxyz)[1:],2)
 
