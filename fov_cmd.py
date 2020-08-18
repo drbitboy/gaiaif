@@ -267,7 +267,7 @@ class GAIASQL(object):
 
     heavy_join = self.get_heavy and """
 INNER JOIN dbheavy.gaiaheavy
- ON gaiartree.offset=dbheavy.gaiaheavy.offset
+ ON gaiartree.idoffset=dbheavy.gaiaheavy.idoffset
 """ or ''
 
     heavy_columns = self.get_heavy and """
@@ -290,14 +290,14 @@ INNER JOIN dbheavy.gaiaheavy
 
     self.query0 = """
 SELECT gaialight.phot_{0}_mean_mag as mean_mag
-      ,gaiartree.ralo as ra
-      ,gaiartree.declo as dec
-      ,gaiartree.offset{3}{4}{5}
+      ,gaialight.ra as ra
+      ,gaialight.dec as dec
+      ,gaiartree.idoffset{3}{4}{5}
 
 FROM gaiartree
 
 INNER JOIN gaialight
- ON gaiartree.offset=gaialight.offset
+ ON gaiartree.idoffset=gaialight.idoffset
 {1}
 {6}
 

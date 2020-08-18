@@ -10,12 +10,12 @@ import spiceypy as sp
 try:
   assert ALLRTREE
 except:
-  import traceback
-  traceback.print_exc()
-  ALLRTREE,ALLLIGHT,ALLHEAVY = all_table_keys = """lgt.gaiartree lgt.gaialight lgt.gaiaheavy""".strip().split()
+  ###import traceback
+  ###traceback.print_exc()
+  ALLRTREE,ALLLIGHT,ALLHEAVY = all_table_keys = """lgt.gaiartree lgt.gaialight hvy.gaiaheavy""".strip().split()
   table_columns = { ALLRTREE: """ralo,rahi,declo,dechi,lomag,himag""".strip().split(',')
-                  , ALLLIGHT: """lgt.gaialight,parallax,pmra,pmdec,phot_g_mean_mag,phot_bp_mean_mag,phot_rp_mean_mag""".strip().split(',')
-                  , ALLHEAVY: """hvy.gaiaheavy,source_id,ra_error,dec_error,parallax_error,pmra_error,pmdec_error,ra_dec_corr,ra_parallax_corr,ra_pmra_corr,ra_pmdec_corr,dec_parallax_corr,dec_pmra_corr,dec_pmdec_corr,parallax_pmra_corr,parallax_pmdec_corr,pmra_pmdec_corr""".strip().split(',')
+                  , ALLLIGHT: """ra,dec,parallax,pmra,pmdec,phot_g_mean_mag,phot_bp_mean_mag,phot_rp_mean_mag""".strip().split(',')
+                  , ALLHEAVY: """source_id,ra_error,dec_error,parallax_error,pmra_error,pmdec_error,ra_dec_corr,ra_parallax_corr,ra_pmra_corr,ra_pmdec_corr,dec_parallax_corr,dec_pmra_corr,dec_pmdec_corr,parallax_pmra_corr,parallax_pmdec_corr,pmra_pmdec_corr""".strip().split(',')
                   }
 
   for table_key in all_table_keys:
@@ -25,7 +25,7 @@ except:
 
   CIRCLETYPE,RADECBOXTYPE,POLYGONTYPE = 'circle radecbox polygon'.split()
 
-  J2000,ICRS = 'J2000 ICRS'
+  J2000,ICRS = 'J2000 ICRS'.split()
   Reffrms = dict()
   for value in (J2000,ICRS,):
     for key in (value,value.lower(),value[0],value[0].lower(),):

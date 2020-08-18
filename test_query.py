@@ -1,20 +1,20 @@
 attach1 = "attach 'gaia.sqlite3' as lgt"
 attach2 = "attach 'gaia_heavy.sqlite3' as hvy"
 select1 = """
-SELECT lgt.gaiartree.offset
-     , lgt.gaiartree.ralo 
-     , lgt.gaiartree.declo 
+SELECT lgt.gaiartree.idoffset
+     , lgt.gaialight.ra
+     , lgt.gaialight.dec
      , hvy.gaiaheavy.source_id 
      , lgt.gaialight.parallax
 
 FROM lgt.gaiartree
 
 INNER JOIN lgt.gaialight
-        ON lgt.gaialight.offset=lgt.gaiartree.offset
+        ON lgt.gaialight.idoffset=lgt.gaiartree.idoffset
 
 INNER JOIN hvy.gaiaheavy
-        ON hvy.gaiaheavy.offset=lgt.gaiartree.offset
-WHERE lgt.gaiartree.dechi > 89.95
+        ON hvy.gaiaheavy.idoffset=lgt.gaiartree.idoffset
+WHERE lgt.gaiartree.dechi > 80.00
 
 ORDER BY hvy.gaiaheavy.source_id
 ;"""

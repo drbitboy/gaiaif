@@ -11,7 +11,7 @@ Makefile.dotar:
 test:
 	[ -d "jsonlab/" ] || git clone https://github.com/fangq/jsonlab.git
 	@( echo 'addpath("jsonlab/") ;' \
-	 ; echo 'x.fov={{1,2},2.9} ;' \
+	 ; echo 'x.fov={{1,2},29} ;' \
 	 ; echo 'x.limit=2 ;' \
 	 ; echo 'x.j2000=1 ;' \
 	 ; echo 'x.ppm=0 ;' \
