@@ -2,7 +2,7 @@ include Makefile.dotar
 
 OBSPOS=[0 0 1e9]
 OBSVEL=[7 8 9]
-OBSY=2020-08-17T12:34:56.789
+OBSY=2020-07-02T12:00:00.000
 
 
 Makefile.dotar:

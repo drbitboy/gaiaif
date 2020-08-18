@@ -419,7 +419,7 @@ Arguments
                  ):
     """Return True if the star (RA,Dec or xyz) argument is in the FOV
 
-Argument vstar is either an RA,Dec pair or a 3-vector
+Argument vstar is either an RA,Dec pair (degrees) or a 3-vector
 
 """
 
@@ -438,33 +438,35 @@ Argument vstar is either an RA,Dec pair or a 3-vector
     ### Get inertial star unit vector without RA,Dec
     uvinertial = uvraw = parse_inertial(vstar,return_radec=False)
 
-    ### - Correct for Proper Motion
+    ### Corrections for direction to star
+    ### - Assume all corrections are small and can be applied in units
+    ###   of radians to a unit vector
+
+    ### - Proper Motion
     if (not (None is self.obs_year)
        ) and (not (None in (pmra_maspy,pmdec_maspy,))
        ) and (pmra_maspy != 0.0 or pmdec_maspy != 0.0):
       uveast = sp.ucrss([0,0,1],uvraw)
       uvnorth = sp.ucrss(uvraw,uveast)
-      cosdec = math.sqrt(1.0 - (uvraw[2]*uvraw[2]))
-      uvtmp = uvinertial
+      ###cosdec = math.sqrt(1.0 - (uvraw[2]*uvraw[2]))
       uvinertial = sp.vhat(sp.vlcom3(self.obs_year*rpmas*pmdec_maspy,uvnorth
-                                    ,self.obs_year*rpmas*pmra_maspy/cosdec,uveast
+                                    ###,self.obs_year*rpmas*pmra_maspy/cosdec,uveast
+                                    ,self.obs_year*rpmas*pmra_maspy,uveast
                                     ,1.0,uvinertial
                                     )
                           )
 
-    ### - Correct for Parallax
+    ### - Parallax
     if (not (None is self.obs_pos)
        ) and (not (None is parallax_maspau)
        ) and (parallax_maspau != 0.0):
-      uvtmp = uvinertial
       uvinertial = sp.vhat(sp.vsub(uvinertial
                                   ,sp.vscl(aupkm*parallax_maspau*rpmas,self.obs_pos)
                                   )
                           )
 
-    ### - Correct for Stellar Aberration
+    ### - Stellar Aberration
     if not (None is self.obs_vel):
-      uvtmp = uvinertial
       uvinertial = sp.vhat(sp.vadd(uvinertial
                                   ,sp.vscl(recip_clight,self.obs_vel)
                                   )

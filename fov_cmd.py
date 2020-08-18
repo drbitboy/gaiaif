@@ -145,7 +145,7 @@ def do_main(argv):
         s_2015_5 = '2015-07-02T12:00:00'
         obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
         assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
-        obs_year = (obs_year_s - obs_2015_5_s) / sp.tyear()
+        obs_year = (obs_year_s - obs_2015_5_s) / 31557600.0
       continue
 
     vertex = arg.split(',')
@@ -173,9 +173,9 @@ def do_main(argv):
 
   if do_debug:
     pprint.pprint(locals(),stream=sys.stderr)
-    print('========',file=sys.stderr)
+    sys.stderr.write('========\n')
     for gaiasql in gaiasqls: print(gaiasql.query,file=sys.stderr)
-    print('========',file=sys.stderr)
+    sys.stderr.write('========\n')
 
   rtn_stars = list()
 
