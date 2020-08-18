@@ -106,8 +106,8 @@ for arg=dotted.fov;
       pycmd=[pycmd delim num2str(val(1))];
     end
     delim=',';
-  endfor
-endfor
+  end
+end
 
 %%% - Optional fields
 try dotted.heavy                                            ;
