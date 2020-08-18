@@ -181,15 +181,20 @@ def do_main(argv):
 
   while len(rtn_stars) < rtn_limit:
 
-    minmag_row,minmag_gsql = None,None
+    minmag_row = dict(parallax_maspau=None
+                     ,pmra_maspy=None
+                     ,pmdec_maspy=None
+                     )
+    minmag_gsql = None
 
     for row,gsql in [gaiasql.get_row() for gaiasql in gaiasqls]:
       if None is row: continue
-      if not (None is minmag_row):
+      if not (None is minmag_gsql):
         if row['mean_mag'] >= minmag_row['mean_mag']: continue
-      minmag_row,minmag_gsql = row,gsql
+      minmag_row.update(row)
+      minmag_gsql = gsql
 
-    if None is minmag_row: break
+    if None is minmag_gsql: break
 
     star_in_fov,uvstar = fov.star_in_fov([minmag_row['ra'],minmag_row['dec']]
                                         ,parallax_maspau=minmag_row['parallax']
