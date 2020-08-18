@@ -174,8 +174,8 @@ def do_main(argv):
   if do_debug:
     pprint.pprint(locals(),stream=sys.stderr)
     sys.stderr.write('========\n')
-    for gaiasql in gaiasqls: print(gaiasql.query,file=sys.stderr)
-    sys.stderr.write('========\n')
+    for gaiasql in gaiasqls: sys.stderr.write(gaiasql.query)
+    sys.stderr.write('\n========\n')
 
   rtn_stars = list()
 
