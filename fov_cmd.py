@@ -78,7 +78,7 @@ def do_main(argv):
   get_ppm = False
   get_mags = False
   get_heavy = False
-  obs_pos,obs_vel,obs_year = [None]*3
+  obs_pos,obs_vel,obs_year,obs_year_arg = [None]*4
   fov_vertices = []
 
   for arg in argv:
