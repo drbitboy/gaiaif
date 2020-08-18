@@ -152,15 +152,18 @@ def do_main(argv):
 
     ### End of argument loop
 
-  ### Build Gaia heavy database path, build FOV
+  ### Build build FOV
   fov = gifu.FOV(fov_vertices
                 ,obs_pos=obs_pos
                 ,obs_vel=obs_vel
                 ,obs_year=obs_year
                 )
 
+  ### Will need gaialight table if either magnitudes were requested, or
+  ### if either parallax or proper motion corrections were requested
+  get_light = get_mags or not ((None,None,) == (obs_pos,obs_year,))
   gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
-                     ,get_ppm,get_mags,get_heavy
+                     ,get_ppm,get_light,get_heavy
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
@@ -238,21 +241,22 @@ class GAIASQL(object):
                                 ,declo=self.declo
                                 ,dechi=self.dechi
                                 )
-    ppm_columns = """
+    ppm_columns = self.get_ppm and """
       ,gaialight.parallax
       ,gaialight.pmra
-      ,gaialight.pmdec"""
+      ,gaialight.pmdec""" or ''
 
-    mags_columns = """
+    mags_columns = self.get_mags and """
       ,gaialight.phot_g_mean_mag
       ,gaialight.phot_bp_mean_mag
-      ,gaialight.phot_rp_mean_mag"""
+      ,gaialight.phot_rp_mean_mag""" or ''
 
-    heavy_join = """
+    heavy_join = self.get_heavy and """
 INNER JOIN dbheavy.gaiaheavy
  ON gaiartree.offset=dbheavy.gaiaheavy.offset
-"""
-    heavy_columns = """
+""" or ''
+
+    heavy_columns = self.get_heavy and """
       ,gaiaheavy.source_id
       ,gaiaheavy.ra_error
       ,gaiaheavy.dec_error
@@ -268,7 +272,7 @@ INNER JOIN dbheavy.gaiaheavy
       ,gaiaheavy.dec_pmdec_corr
       ,gaiaheavy.parallax_pmra_corr
       ,gaiaheavy.parallax_pmdec_corr
-      ,gaiaheavy.pmra_pmdec_corr"""
+      ,gaiaheavy.pmra_pmdec_corr""" or ''
 
     self.query0 = """
 SELECT gaialight.phot_{0}_mean_mag as mean_mag
@@ -295,10 +299,10 @@ ORDER BY phot_{0}_mean_mag
 """.format(self.mag_type
           ,'{extra_join_light_on}'
           ,'{extra_mag_limits}'
-          ,self.get_ppm and ppm_columns or ''
-          ,self.get_mags and mags_columns or ''
-          ,self.get_heavy and heavy_columns or ''
-          ,self.get_heavy and heavy_join or ''
+          ,ppm_columns
+          ,mags_columns
+          ,heavy_columns
+          ,heavy_join
           )
 
     if None is self.lomag:
@@ -312,7 +316,6 @@ ORDER BY phot_{0}_mean_mag
       self.extra_join_light_on += """AND gaiartree.lomag <= :himag\n"""
       self.extra_mag_limits += """  AND gaialight.phot_{0}_mean_mag <= :himag\n""".format(self.mag_type)
 
-    varself = vars(self)
     self.query = self.query0.format(**vars(self))
     self.cursor = sl3.connect(self.gaia_sl3).cursor()
     if self.get_heavy:
@@ -335,7 +338,7 @@ ORDER BY phot_{0}_mean_mag
 
   def cursor_next(self):
     """Get next .row from cursor"""
-    assert not self.done,'Bad use of GAIASQL class; contact programmer, code WSNBATGH-GAIASQL-0'
+    assert not self.done,'Incorrect use of GAIASQL class; contact programmer, code WSNBATGH-GAIASQL-0'
     try:
       if self.use___next: self.row = self.cursor.__next__()
       else              : self.row = self.cursor.next()

@@ -53,13 +53,22 @@ vertices' direction, and will be rotated such the the +X axis is not
 parallel to any of the edges of the polygon from the FOV projected onto
 the Z=+1 plane.
 
-Argument
+Arguments
 
   fovraws - sequence either of vector and cone and half-angle for
             circular FOV, or of a pair of vectors for RA,Dec box, or
             of three or more vectors for a polygonal FOV.  A vector is
             a sequence either of two values, RA,Dec, or of three values,
             X,Y,Z.
+
+  obs_pos - Observer position, solar system barycentric, 3-vector, km
+            - For parallax correction
+
+  obs_vel - Observer velocity, solar system barycentric, 3-vector, km/s
+            - For proper motion correction
+
+  obs_year - Observer time, y past 2015.5 (Gaia DR2 epoch)
+            - For stellar aberration correction
 
 """
     ### Get count of items in argument sequence; ensure it is 2 or more
@@ -433,8 +442,9 @@ Argument vstar is either an RA,Dec pair or a 3-vector
     if (not (None is self.obs_year)) and (pmdec_maspy != 0.0 or pmra_maspy != 0.0):
       uveast = sp.ucrss([0,0,1],uvraw)
       uvnorth = sp.ucrss(uvraw,uveast)
+      cosdec = math.sqrt(1.0 - (uvraw[2]*uvraw[2]))
       uvinertial = sp.vhat(sp.vlcom3(self.obs_year*rpmas*pmdec_maspy,uvnorth
-                                    ,self.obs_year*rpmas*pmra_maspy/abs(uvraw[2]),uveast
+                                    ,self.obs_year*rpmas*pmra_maspy/cosdec,uveast
                                     ,1.0,uvinertial
                                     )
                           )
