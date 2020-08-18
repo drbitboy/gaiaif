@@ -140,8 +140,12 @@ def do_main(argv):
       try:
         obs_year = float(obs_year_arg) - 2015.5
       except:
-        obs_year_s,msg = sp.tparse(arg[7:],99)
-        assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(arg,msg)
+        try:
+          obs_year_s,msg = sp.tparse(arg[7:],99)
+          assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(arg,msg)
+        except:
+          if '--obsy=' == arg: continue
+          raise
         s_2015_5 = '2015-07-02T12:00:00'
         obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
         assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
