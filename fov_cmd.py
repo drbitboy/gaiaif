@@ -185,9 +185,9 @@ def do_main(argv):
 
   while len(rtn_stars) < rtn_limit:
 
-    minmag_row = dict(parallax_maspau=None
-                     ,pmra_maspy=None
-                     ,pmdec_maspy=None
+    minmag_row = dict(parallax=None
+                     ,pmra=None
+                     ,pmdec=None
                      )
     minmag_gsql = None
 
