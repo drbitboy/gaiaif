@@ -135,7 +135,7 @@ try pycmd = [ pycmd ' --obsy=' num2str(dotted.obsy)]        ; catch end
 
 [cmd_status,cmd_stdout] = system(pycmd);
 
-printf('%s\n',cmd_stdout)
+fprintf(1,'%s\n',cmd_stdout)
 
 return_object = loadjson(cmd_stdout);
 
