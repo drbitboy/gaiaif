@@ -47,13 +47,13 @@ if "__main__" == __name__:
     if not ('--no-plot' in sys.argv[1:]):
       import matplotlib.pyplot as plt
 
-      xs,ys,zs = zip(*[sp.radrec(1.,*sp.vsclg(rpd,radec,2)) for inside,radec in rtn if inside])
+      xs,ys,zs = zip(*[sp.radrec(1.,*sp.vsclg(rpd,radec,2)) for (inside,uvstar,),radec in rtn if inside])
 
       plt.axhline(0,color='lightgray')
       plt.axvline(0,color='lightgray')
 
       if len(xs) < len(rtn):
-        outxs,outys,outzs = zip(*[sp.radrec(1.,*sp.vsclg(rpd,radec,2)) for inside,radec in rtn if not inside])
+        outxs,outys,outzs = zip(*[sp.radrec(1.,*sp.vsclg(rpd,radec,2)) for (inside,uvstar,),radec in rtn if not inside])
         plt.plot([x/rpd for x in outxs],[y/rpd for y in outys],',r',label='Outside FOV')
 
       plt.plot([x/rpd for x in xs],[y/rpd for y in ys],'.g',markersize=.3,label='Inside FOV')

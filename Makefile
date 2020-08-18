@@ -1,5 +1,9 @@
 include Makefile.dotar
-	
+
+OBSPOS=[0 0 1e9]
+OBSVEL=[7 8 9]
+OBSY=2020-08-17T12:34:56.789
+
 
 Makefile.dotar:
 	echo "tar:@#tar zcf - 00readme.txt *.m *.py Makefile | tee gaiaif.tar.gz | tar zdvf -" | tr '@#' \\n\\t > $@
@@ -13,9 +17,10 @@ test:
 	 ; echo 'x.ppm=0 ;' \
 	 ; echo 'x.mags=1 ;' \
 	 ; echo 'x.heavy=1 ;' \
-	 ; echo 'x.obspos=[4 5 6] ;' \
-	 ; echo 'x.obsvel=[7 8 9] ;' \
-	 ; echo 'x.obsy="2020-08-17T12:34:56.789" ;' \
+	 ; echo 'x.obspos=$(OBSPOS) ;' \
+	 ; echo 'x.obsvel=$(OBSVEL) ;' \
+	 ; echo 'x.obsy="$(OBSY)" ;' \
+	 ; echo 'format longG ;' \
 	 ; echo 'fov_cmd(x)' \
 	 ) \
 	 | octave --no-gui

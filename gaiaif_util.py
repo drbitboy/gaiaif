@@ -413,9 +413,9 @@ Arguments
   ########################################################################
   def star_in_fov(self
                  ,vstar
-                 ,parallax_maspau=0.0
-                 ,pmra_maspy=0.0
-                 ,pmdec_maspy=0.0
+                 ,parallax_maspau=None
+                 ,pmra_maspy=None
+                 ,pmdec_maspy=None
                  ):
     """Return True if the star (RA,Dec or xyz) argument is in the FOV
 
@@ -432,17 +432,20 @@ Argument vstar is either an RA,Dec pair or a 3-vector
         if ra>rahi: continue
         if dec<declo: continue
         if dec>dechi: continue
-        return True
-      return False
+        return True,sp.radrec(1.,rpd*ra,rpd*dec)
+      return False,None
 
     ### Get inertial star unit vector without RA,Dec
     uvinertial = uvraw = parse_inertial(vstar,return_radec=False)
 
     ### - Correct for Proper Motion
-    if (not (None is self.obs_year)) and (pmdec_maspy != 0.0 or pmra_maspy != 0.0):
+    if (not (None is self.obs_year)
+       ) and (not (None in (pmra_maspy,pmdec_maspy,))
+       ) and (pmra_maspy != 0.0 or pmdec_maspy != 0.0):
       uveast = sp.ucrss([0,0,1],uvraw)
       uvnorth = sp.ucrss(uvraw,uveast)
       cosdec = math.sqrt(1.0 - (uvraw[2]*uvraw[2]))
+      uvtmp = uvinertial
       uvinertial = sp.vhat(sp.vlcom3(self.obs_year*rpmas*pmdec_maspy,uvnorth
                                     ,self.obs_year*rpmas*pmra_maspy/cosdec,uveast
                                     ,1.0,uvinertial
@@ -450,14 +453,18 @@ Argument vstar is either an RA,Dec pair or a 3-vector
                           )
 
     ### - Correct for Parallax
-    if (not (None is self.obs_pos)) and (parallax_maspau != 0.0):
+    if (not (None is self.obs_pos)
+       ) and (not (None is parallax_maspau)
+       ) and (parallax_maspau != 0.0):
+      uvtmp = uvinertial
       uvinertial = sp.vhat(sp.vsub(uvinertial
-                                  ,sp.vscl(aupkm*parallax_maspau*rpmas,self.obspos)
+                                  ,sp.vscl(aupkm*parallax_maspau*rpmas,self.obs_pos)
                                   )
                           )
 
     ### - Correct for Stellar Aberration
     if not (None is self.obs_vel):
+      uvtmp = uvinertial
       uvinertial = sp.vhat(sp.vadd(uvinertial
                                   ,sp.vscl(recip_clight,self.obs_vel)
                                   )
@@ -466,7 +473,7 @@ Argument vstar is either an RA,Dec pair or a 3-vector
     if self.fovtype == FOV.CIRCLETYPE:
       ##################################################################
       ### Compare inertial star vector to circular FOV
-      return sp.vdot(uvinertial,self.uv_cone_axis) >= self.min_cosine
+      return sp.vdot(uvinertial,self.uv_cone_axis) >= self.min_cosine,uvinertial
 
     assert FOV.POLYGONTYPE == self.fovtype,'Unknown FOV type [{0}]'.format(self.fovtype)
 
@@ -477,16 +484,16 @@ Argument vstar is either an RA,Dec pair or a 3-vector
       ### Convex FOV:  a negative dot product with the inward-pointing
       ###              normal to any side indicates star is outside FOV
       for inwardnorm in self.inwardsidenorms:
-        if sp.vdot(uvinertial,inwardnorm) < 0.0: return False
+        if sp.vdot(uvinertial,inwardnorm) < 0.0: return False,uvinertial
 
       ### All dot products were non-negative:  star is within FOV
-      return True
+      return True,uvinertial
 
     ### Rotate inertial unit vector to local reference frame (reffrm)
     uvlocalstar = self.rotate_to_local(uvinertial)
 
     ### Scale to Z=unity
-    if uvlocalstar[2] < 1e-15: return False
+    if uvlocalstar[2] < 1e-15: return False,uvinertial
     z1star = sp.vscl(1.0/uvlocalstar[2],uvlocalstar)
 
     ### Setup .localxyzs and .fovsides
@@ -498,7 +505,7 @@ Argument vstar is either an RA,Dec pair or a 3-vector
                  if fovside.right_of(z1star)
                 ])
 
-    return (count&1) and True or False
+    return ((count&1) and True or False),uvinertial
 
 
   ########################################################################
@@ -567,7 +574,7 @@ Argument vstar is either an RA,Dec pair or a 3-vector
     return sp.mxv(self.mtxtofov,vxyz)
 
   ########################################################################
-  def setup_stellar_aberation(self,observer_velocity_xyz):
+  def setup_stellar_aberration(self,observer_velocity_xyz):
     """Scale observer velocity in the inertial frame (J2000 or ICRS)
 by the reciprocal of speed of light.  The resulting vector can be added
 to unit vectors, or subtracted, to correct for stellar aberration.

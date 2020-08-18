@@ -53,6 +53,8 @@ import sqlite3 as sl3
 import spiceypy as sp
 import gaiaif_util as gifu
 
+dpr = sp.dpr()
+
 ### Allowed magnitude types
 mag_types = set('g bp rp'.split())
 
@@ -136,11 +138,11 @@ def do_main(argv):
     if arg.startswith('--obsy='):
       obs_year_arg = arg[7:]
       try:
-        obs_year = float(obs_year_arg)
+        obs_year = float(obs_year_arg) - 2015.5
       except:
         obs_year_s,msg = sp.tparse(arg[7:],99)
         assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(arg,msg)
-        s_2015_5 = '2015-06-01T12:00:00'
+        s_2015_5 = '2015-07-02T12:00:00'
         obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
         assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
         obs_year = (obs_year_s - obs_2015_5_s) / sp.tyear()
@@ -189,7 +191,19 @@ def do_main(argv):
 
     if None is minmag_row: break
 
-    if fov.star_in_fov([minmag_row['ra'],minmag_row['dec']]):
+    star_in_fov,uvstar = fov.star_in_fov([minmag_row['ra'],minmag_row['dec']]
+                                        ,parallax_maspau=minmag_row['parallax']
+                                        ,pmra_maspy=minmag_row['pmra']
+                                        ,pmdec_maspy=minmag_row['pmdec']
+                                        )
+
+    if star_in_fov:
+
+      minmag_row['uvstar_corrected'] = list(uvstar)
+      (minmag_row['rastar_corrected']
+      ,minmag_row['decstar_corrected']
+      ,) = sp.vsclg(dpr,sp.recrad(uvstar)[1:3],2)
+
       rtn_stars.append(minmag_row)
 
     minmag_gsql.cursor_next()
