@@ -8,7 +8,7 @@ try: dpr
 except:
   dpr = sp.dpr()
   rpd = sp.rpd()
-  rpmas = rpd / 36e6                ### Radian / milliarcsecond
+  rpmas = rpd / 3.6e6               ### Radian / milliarcsecond
   aupkm = sp.convrt(1.,'km','au')   ### Astonomical Unit / kilometer
   recip_clight = 1.0 / sp.clight()
 
@@ -450,7 +450,6 @@ Argument vstar is either an RA,Dec pair (degrees) or a 3-vector
       uvnorth = sp.ucrss(uvraw,uveast)
       ###cosdec = math.sqrt(1.0 - (uvraw[2]*uvraw[2]))
       uvinertial = sp.vhat(sp.vlcom3(self.obs_year*rpmas*pmdec_maspy,uvnorth
-                                    ###,self.obs_year*rpmas*pmra_maspy/cosdec,uveast
                                     ,self.obs_year*rpmas*pmra_maspy,uveast
                                     ,1.0,uvinertial
                                     )
