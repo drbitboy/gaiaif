@@ -212,6 +212,11 @@ def do_main(argv):
       (minmag_row['rastar_corrected']
       ,minmag_row['decstar_corrected']
       ,) = sp.vsclg(dpr,sp.recrad(uvstar)[1:3],2)
+      (minmag_row['rastar_delta']
+      ,minmag_row['decstar_delta']
+      ,) = (minmag_row['rastar_corrected'] - minmag_row['ra']
+           ,minmag_row['decstar_corrected'] - minmag_row['dec']
+           ,)
 
       rtn_stars.append(minmag_row)
 

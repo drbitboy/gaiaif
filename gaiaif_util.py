@@ -6,10 +6,10 @@ import spiceypy as sp
 
 try: dpr
 except:
-  dpr = sp.dpr()
-  rpd = sp.rpd()
-  rpmas = rpd / 3600e3              ### Radian / milliarcsecond
-  aupkm = sp.convrt(1.,'km','au')   ### Astonomical Unit / kilometer
+  dpr = sp.dpr()                                       ### degree / Radian
+  rpd = sp.rpd()                                       ### Radian / degree
+  rpmas = sp.convrt(1.,'arcseconds','radians') * 1e-3  ### Radian / milliarcsecond
+  aupkm = sp.convrt(1.,'km','au')                      ### Astonomical Unit / kilometer
   recip_clight = 1.0 / sp.clight()
 
 
