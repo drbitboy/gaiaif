@@ -11,6 +11,9 @@ Makefile.dotar:
 	echo "tar:@#tar zcf - 00readme.txt *.m *.py Makefile | tee gaiaif.tar.gz | tar zdvf -" | tr '@#' \\n\\t > $@
 
 test:
+	python urlget_test.py --test-gaia && echo SUCCESS || echo FAILURE
+
+test_octave:
 	[ -d "jsonlab/" ] || git clone https://github.com/fangq/jsonlab.git
 	( echo 'addpath("jsonlab/") ;' \
 	 ; echo 'x.fov=$(FOV) ;' \

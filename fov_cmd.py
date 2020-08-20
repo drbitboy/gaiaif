@@ -165,11 +165,11 @@ def do_main(argv):
                 ,obs_year=obs_year
                 )
 
-  ### Will need gaialight table if either magnitudes were requested, or
-  ### if either parallax or proper motion corrections were requested
-  get_light = get_mags or not ((None,None,) == (obs_pos,obs_year,))
+  ### Will need gaialight table if either proper motions were requested,
+  ### or if either parallax or proper motion corrections were requested
+  get_ppm_final = get_ppm or not ((None,None,) == (obs_pos,obs_year,))
   gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
-                     ,get_ppm,get_light,get_heavy
+                     ,get_ppm_final,get_mags,get_heavy
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
