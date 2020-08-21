@@ -2,10 +2,11 @@ Makefile.dotar
 __pycache__
 *.sqlite3
 gaiaif.tar.gz
+de421.bsp
 jsonlab/
-x.x
 x.log
 x.err
+x.x
 y.y
 z.z
 a.a
