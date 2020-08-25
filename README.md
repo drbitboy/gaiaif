@@ -35,7 +35,7 @@
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    See also comments in fov_cmd.m and test_octave target in Makefile
+    Actual inputs and outputs are more extensive than the example above; see also the comments in fov_cmd.m, as well as the test_octave target in Makefile.
 
 ## Manifest
 
