@@ -36,3 +36,26 @@
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     See also comments in fov_cmd.m
+
+## Manifest
+
+* README.md - this file
+* Makefile - make file to run tests
+* fov_cmd.m - Matlab/Octave script to test FOV interface
+* fov_cmd.py - Python script called by fov_cmd.m
+* gaia_icrs_fk.py - Transformation between J2000 and ICRS reference frames
+* gaiaif_util.py - Gaia interface utilities; implements FOV and FOVSIDE classes
+* test_parallax_stellar_aberr.py - Script to test stellar aberration calculation
+* test_query.py - sample query of Gaia SQLite3 database (DB)
+* urlget_test.py - Compare local Gaia interface against ESA/Gaia TAB web API
+* validate_delta_ra_formula.py - Validate formula that calculates half-RA (Right Ascension) difference of two planes that contain a conical FOV (Field Of View)
+* validate_gaiaif_fov.py - test code for gaiaif_util.FOV class
+* gaiaif.py - Initial attempt at Gaia interface; not yet finished; use gaiaif_util.py instead
+* 00readme.txt - Text version of Sample usage above
+* Extra-repo files
+  * Makefile.dotar - include file for Makefile
+  * make_test_octave.log - output of [make test_octave]
+  * gaia.sqlite3 - typically a symlink to Gaia SQLite3 DB
+  * gaia_heavy.sqlite3 - typically a symlink to Gaia SQLite3 DB
+  * de421.bsp - Solar system ephemeris downloaded and used by Makefile tests
+  * jsonlab/ - location of JSON parsing code for fov_cmd.py
