@@ -35,7 +35,7 @@
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    See also comments in fov_cmd.m
+    See also comments in fov_cmd.m and test case in Makefile
 
 ## Manifest
 
@@ -49,13 +49,13 @@
 * test_query.py - sample query of Gaia SQLite3 database (DB)
 * urlget_test.py - Compare local Gaia interface against ESA/Gaia TAB web API
 * validate_delta_ra_formula.py - Validate formula that calculates half-RA (Right Ascension) difference of two planes that contain a conical FOV (Field Of View)
-* validate_gaiaif_fov.py - test code for gaiaif_util.FOV class
+* validate_gaiaif_fov.py - Test code for gaiaif_util.FOV class
 * gaiaif.py - Initial attempt at Gaia interface; not yet finished; use gaiaif_util.py instead
 * 00readme.txt - Text version of Sample usage above
 * Extra-repo files
-  * Makefile.dotar - include file for Makefile
-  * make_test_octave.log - output of [make test_octave]
-  * gaia.sqlite3 - typically a symlink to Gaia SQLite3 DB
-  * gaia_heavy.sqlite3 - typically a symlink to Gaia SQLite3 DB
+  * Makefile.dotar - Include file for Makefile
+  * make_test_octave.log - Output of [make test_octave]
+  * gaia.sqlite3 - Typically a symlink to Gaia SQLite3 light DB
+  * gaia_heavy.sqlite3 - Typically a symlink to Gaia SQLite3 heavy DB
   * de421.bsp - Solar system ephemeris downloaded and used by Makefile tests
-  * jsonlab/ - location of JSON parsing code for fov_cmd.py
+  * jsonlab/ - Location of JSON parsing code for fov_cmd.py; Git-cloned by Makefile
