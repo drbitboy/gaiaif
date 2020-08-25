@@ -67,7 +67,8 @@ vcone0 = sp.vrotv(vx,vz,hangrad)
 ###   intersection with celestial sphere at Radius=1; these vectors will
 ##    be rotated by angle -Declination around +Y axis, and their RA
 ##    calculated to estimate the half-RA at that declination
-vcones = [sp.vrotv(vcone0,vx,sp.halfpi()*i/1000) for i in range(999)]
+##    - Use cosine to oversample rotations near 0 and PI/2
+vcones = [sp.vrotv(vcone0,vx,sp.halfpi()*(1+math.cos(sp.pi()*i/1e3))/2) for i in range(1000)]
 
 ########################################################################
 ### Initialize output list, loop over declinations
@@ -88,7 +89,7 @@ for tansqdec,cosdec,decrad in trigdecs:
                            ])
 
     ### Append results to output list
-    halfras.append((halfracalc,halfraest,))
+    halfras.append((halfracalc-halfraest,halfracalc,halfraest,))
 
   except ValueError as e:
     ### At the point when the sum of (Dec + cone-half-angle) is 90 or
@@ -115,12 +116,13 @@ fig,(ax0,ax1,) = plt.subplots(2,1,sharex=True)
 fig.suptitle('Cone half-angle = {0}deg'.format(hangdeg))
 
 ax0.set_ylabel('$\Delta$RA, deg')
-ax1.set_ylabel('Estimate error, deg')
+ax1.set_ylabel('Estimate error, microdeg')
 ax1.set_xlabel('Declination, deg')
 
-ax0.plot(decs,[b for a,b in halfras],'o',label='Est.')
-ax0.plot(decs,[a for a,b in halfras],label='Calc')
-ax1.plot(decs,[a-b for a,b in halfras],'o',label='Calc-Est.')
+diffs,ayes,bees = zip(*halfras)
+ax0.plot(decs,[b for b in bees],'o',label='Est.')
+ax0.plot(decs,[a for a in ayes],label='Calc')
+ax1.plot(decs,[diff*1e-6 for diff in diffs],'o',label='Calc-Est.')
 
 ax0.legend(loc='upper left')
 ax1.legend(loc='upper left')
@@ -152,7 +154,7 @@ Derivation
     [P]    -  Point "P"
     [PQ]   -  line from [P] to [Q]
     |PQ|   -  length pf [PQ]
-    [PQR]  -  Angle from [P] to [Q] (vertext) to [R]; alsso triangle
+    [PQR]  -  Angle from [P] to [Q] (vertex) to [R]; alsso triangle
 
   When the cone axis is on the equator, Dec(lination) = 0, and, looking
   down from the top (from +Z), the view projected onto the equatorial
@@ -175,7 +177,7 @@ Derivation
                  cos(hang)       cone axis = [@o]
 
 
-  In this case, [T] is at the end of the disk diamerer parallel to the
+  In this case, [T] is at the end of the disk diameter parallel to the
   equator, and the half-RA angle, i.e. angle [@oT], is the same as hang,
   the half-angle of the cone.
 
