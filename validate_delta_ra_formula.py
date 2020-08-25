@@ -122,7 +122,7 @@ ax1.set_xlabel('Declination, deg')
 diffs,ayes,bees = zip(*halfras)
 ax0.plot(decs,[b for b in bees],'o',label='Est.')
 ax0.plot(decs,[a for a in ayes],label='Calc')
-ax1.plot(decs,[diff*1e-6 for diff in diffs],'o',label='Calc-Est.')
+ax1.plot(decs,[diff*1e6 for diff in diffs],'o',label='Calc-Est.')
 
 ax0.legend(loc='upper left')
 ax1.legend(loc='upper left')
