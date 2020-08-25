@@ -17,7 +17,7 @@ test_parallax_stellar_aberration:
 	@python test_parallax_stellar_aberr.py && echo SUCCESS $@ || echo FAILURE $@
 
 test_proper_motion:
-	@python urlget_test.py --test-gaia && echo SUCCESS $@ || echo FAILURE $@
+	@python test_proper_motion.py --test-gaia && echo SUCCESS $@ || echo FAILURE $@
 
 test_octave:
 	@[ -d "jsonlab/" ] || git clone https://github.com/fangq/jsonlab.git

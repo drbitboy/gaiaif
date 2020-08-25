@@ -47,7 +47,7 @@
 * gaiaif_util.py - Gaia interface utilities; implements FOV and FOVSIDE classes
 * test_parallax_stellar_aberr.py - Script to test stellar aberration calculation
 * test_query.py - sample query of Gaia SQLite3 database (DB)
-* urlget_test.py - Compare local Gaia interface against ESA/Gaia TAB web API
+* test_proper_motion.py - Compare local Gaia interface proper motion calculations against ESA/Gaia TAP web API
 * validate_delta_ra_formula.py - Validate formula that calculates half-RA (Right Ascension) difference of two planes that contain a conical FOV (Field Of View)
 * validate_gaiaif_fov.py - Test code for gaiaif_util.FOV class
 * gaiaif.py - Initial attempt at Gaia interface; not yet finished; use gaiaif_util.py instead
