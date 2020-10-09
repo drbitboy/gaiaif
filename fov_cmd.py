@@ -158,7 +158,7 @@ def do_main(argv):
 
     ### End of argument loop
 
-  ### Build build FOV
+  ### Build FOV
   fov = gifu.FOV(fov_vertices
                 ,obs_pos=obs_pos
                 ,obs_vel=obs_vel
