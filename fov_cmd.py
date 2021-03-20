@@ -42,7 +42,7 @@ Other options:
   --heavy (Retrieve source_id, errors and corr. coeffs, , *error, *corr)
   --obspos=X,Y,Z (Observer position, km, triggers parallax correction)
   --obsvel=VX,VY,VZ (Observer velocity, km/s, triggers stellar aberration correction)
-  --obsy=YYYY.ddd (Observer time, fractional year, triggers proper mostion correction)
+  --obsy=YYYY.ddd (Observer time, fractional year, triggers proper motion correction)
 
 """
 
@@ -67,6 +67,7 @@ def do_main(argv):
   ######################################################################
   ### Process command-line
 
+  """OBSOLETE:
   ### - Default values
 
   rtn_limit = 200
@@ -79,77 +80,67 @@ def do_main(argv):
   get_mags = False
   get_heavy = False
   obs_pos,obs_vel,obs_year,obs_year_arg = [None]*4
+  :OBSOLETE"""
   fov_vertices = []
+
+  kwargs = dict()
 
   for arg in argv:
     ### - Loop over arguments
 
     if arg.startswith('--limit='):
-      rtn_limit = int(arg[8:])
+      kwargs['rtn_limit'] = int(arg[8:])
       continue
 
     if arg.startswith('--mag-max='):
-      mag_max = float(arg[10:])
+      kwargs['mag_max'] = float(arg[10:])
       continue
 
     if arg.startswith('--mag-min='):
-      mag_min = float(arg[10:])
+      kwargs['mag_min'] = float(arg[10:])
       continue
 
     if arg.startswith('--mag-type='):
-      mag_type = arg[11:].strip()
+      kwargs['mag_type'] = arg[11:].strip()
       assert mag_type in mag_types,'Magnitude type argument [{0}] does not specify on of the set of allowed types {1}'.format(arg,mag_types)
       continue
 
     if arg.startswith('--gaia-sqlite3='):
-      gaia_sl3 = arg[15:]
+      kwargs['gaia_sl3'] = arg[15:]
       assert gaia_sl3.endswith('.sqlite3'),'Gaia SQLite3 filepath argument [{0}] does not end in .sqlite3'.format(arg)
       continue
 
     if '--j2000' == arg:
-      use_j2000 = True
+      kwargs['use_j2000'] = True
       continue
 
     if '--ppm' == arg:
-      get_ppm = True
+      kwargs['get_ppm'] = True
       continue
 
     if '--mags' == arg:
-      get_mags = True
+      kwargs['get_mags'] = True
       continue
 
     if '--heavy' == arg:
-      get_heavy = True
+      kwargs['get_heavy'] = True
       continue
 
     if arg.startswith('--buffer='):
-      radec_buffer = float(arg[9:])
+      kwargs['radec_buffer'] = float(arg[9:])
       sys.stderr.write('Warning:  RA,DEC buffer not yet implemented\n')
       continue
 
     if arg.startswith('--obspos='):
-      obs_pos = list(map(float,arg[9:].split(',')))
+      kwargs['obs_pos'] = list(map(float,arg[9:].split(',')))
       continue
 
     if arg.startswith('--obsvel='):
-      obs_vel = list(map(float,arg[9:].split(',')))
+      kwargs['obs_vel'] = list(map(float,arg[9:].split(',')))
       continue
 
     if arg.startswith('--obsy='):
-      obs_year_arg = arg[7:]
-      try:
-        obs_year = float(obs_year_arg) - 2015.5
-      except:
-        try:
-          obs_year_s,msg = sp.tparse(arg[7:],99)
-          assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(arg,msg)
-        except:
-          if '--obsy=' == arg: continue
-          raise
-        s_2015_5 = '2015-07-02T12:00:00'
-        obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
-        assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
-        obs_year = (obs_year_s - obs_2015_5_s) / 31557600.0
+      kwargs['obs_year_arg'] = arg[7:]
       continue
 
     vertex = arg.split(',')
@@ -157,6 +148,70 @@ def do_main(argv):
     fov_vertices.append(vertex)
 
     ### End of argument loop
+
+  return gaiaif(fov_vertices,**kwargs)
+
+
+########################################################################
+def gaiaif(fov_vertices
+          ,rtn_limit=200
+          ,mag_min=None,mag_max=None
+          ,mag_type='g'
+          ,radec_buffer=0.0   ### Not yet implemented
+          ,gaia_sl3= 'gaia.sqlite3'
+          ,use_j2000=False
+          ,get_ppm=False,get_mags=False,get_heavy=False
+          ,obs_pos=None,obs_vel=None,obs_year_arg=None
+          ,**kwargs
+          ):
+  """
+GAIA R(Tree SQLite3 interface
+
+Sample usage:
+
+  import fov_cmd
+  fov_cmd([[10,-45,],[12,-43]])  ### Simple RA,DEC window
+  fov_cmd([[10,-45,],0.3)        ### Conical FOV, .3deg half-angle
+  fov_cmd([[12,-43,],[10,-43]
+          ,[10,-45,],[12,-45])   ### Polygonal FOV
+
+Keywords:
+
+  ,rtn_limit=200
+  ,mag_max=MaximumMagnitude
+  ,mag_min=MinimumMagnitude
+  ,mag_type='g'|'bp'|'rp'
+  ,gaia_sl3='gaia.sqlite3'   Default; also assumes gaia_heavy.sqlite3
+  ,use_j2000=True            FOV is inertial J2000 instead of ICRS
+  ,buffer=pad                Pad around convex FOV;not yet implemented
+  ,get_ppm=True              Retrieve Parallax and Proper Motions
+  ,get_mags=True             Retrieve all magnitudes, phot_*_mean_mag
+  ,get_heavy                 Retrieve source_id, errors & corr. coeffs
+  ,obspos=[X,Y,Z]            Obs posn, km, triggers parallax correction
+  ,obsvel=[VX,VY,VZ]         Obs vel, km/s, triggers stellar aberration
+  ,obs_year_arg=YYYY.ddd     Obs time, fractional year, triggers PM
+  ,obs_year_arg='YYYY-mm-dd-HH:mm:ss.cc'  Alternate obs time, cal date
+
+  """
+
+  if obs_year_arg:
+    ### Parse observer time value, convert to y past GAIA DR2 epoch
+    try:
+      ### Parse fractional year as float
+      obs_year = float(obs_year_arg) - 2015.5
+    except:
+      ### On exception, parse string as calendar date
+      obs_year_s,msg = sp.tparse(obs_year_arg,99)
+      assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(obs_year_arg,msg)
+      ### GAIA DR2 epoch
+      s_2015_5 = '2015-07-02T12:00:00'
+      obs_2015_5_s,msg = sp.tparse(s_2015_5,99)
+      assert not msg,'Problem parsing obs_year[{0}]: [{1}]'.format(s_2015_5,msg)
+      ### Convert difference to y
+      obs_year = (obs_year_s - obs_2015_5_s) / 31557600.0
+  else:
+    ### No argument supplied
+    obs_year = None
 
   ### Build FOV
   fov = gifu.FOV(fov_vertices
