@@ -1,4 +1,12 @@
-"""fov_cmd.py - command0-line utility to otuput Gaia stars in an FOV
+"""fov_cmd.py - command-line utility to output Gaia stars in an FOV
+
+Usage (Python; see gaiaif(...) below):
+
+  import fov_cmd
+  fov_cmd([[RA0,Dec0,],[RA1,Dec1]])  ### Simple RA,DEC window
+  fov_cmd([[RA0,DEC0,],halfang)      ### Conical FOV, .3deg half-angle
+  fov_cmd([[RA0,Dec0],[RA1,Dec1]
+          ,...,[RAn,Decn])           ### Polygonal FOV
 
 Usage (BASH):
 
@@ -59,97 +67,6 @@ dpr = sp.dpr()
 mag_types = set('g bp rp'.split())
 
 do_debug = 'DEBUG' in os.environ
-
-
-########################################################################
-def do_main(argv):
-
-  ######################################################################
-  ### Process command-line
-
-  """OBSOLETE:
-  ### - Default values
-
-  rtn_limit = 200
-  mag_min,mag_max = None,None
-  mag_type = 'g'
-  radec_buffer = 0.0   ### Not yet implemented
-  gaia_sl3= 'gaia.sqlite3'
-  use_j2000 = False
-  get_ppm = False
-  get_mags = False
-  get_heavy = False
-  obs_pos,obs_vel,obs_year,obs_year_arg = [None]*4
-  :OBSOLETE"""
-  fov_vertices = []
-
-  kwargs = dict()
-
-  for arg in argv:
-    ### - Loop over arguments
-
-    if arg.startswith('--limit='):
-      kwargs['rtn_limit'] = int(arg[8:])
-      continue
-
-    if arg.startswith('--mag-max='):
-      kwargs['mag_max'] = float(arg[10:])
-      continue
-
-    if arg.startswith('--mag-min='):
-      kwargs['mag_min'] = float(arg[10:])
-      continue
-
-    if arg.startswith('--mag-type='):
-      kwargs['mag_type'] = arg[11:].strip()
-      assert mag_type in mag_types,'Magnitude type argument [{0}] does not specify on of the set of allowed types {1}'.format(arg,mag_types)
-      continue
-
-    if arg.startswith('--gaia-sqlite3='):
-      kwargs['gaia_sl3'] = arg[15:]
-      assert gaia_sl3.endswith('.sqlite3'),'Gaia SQLite3 filepath argument [{0}] does not end in .sqlite3'.format(arg)
-      continue
-
-    if '--j2000' == arg:
-      kwargs['use_j2000'] = True
-      continue
-
-    if '--ppm' == arg:
-      kwargs['get_ppm'] = True
-      continue
-
-    if '--mags' == arg:
-      kwargs['get_mags'] = True
-      continue
-
-    if '--heavy' == arg:
-      kwargs['get_heavy'] = True
-      continue
-
-    if arg.startswith('--buffer='):
-      kwargs['radec_buffer'] = float(arg[9:])
-      sys.stderr.write('Warning:  RA,DEC buffer not yet implemented\n')
-      continue
-
-    if arg.startswith('--obspos='):
-      kwargs['obs_pos'] = list(map(float,arg[9:].split(',')))
-      continue
-
-    if arg.startswith('--obsvel='):
-      kwargs['obs_vel'] = list(map(float,arg[9:].split(',')))
-      continue
-
-    if arg.startswith('--obsy='):
-      kwargs['obs_year_arg'] = arg[7:]
-      continue
-
-    vertex = arg.split(',')
-    if 1==len(vertex): vertex = vertex.pop()
-    fov_vertices.append(vertex)
-
-    ### End of argument loop
-
-  return gaiaif(fov_vertices,**kwargs)
 
 
 ########################################################################
@@ -236,8 +153,10 @@ Keywords:
     for gaiasql in gaiasqls: sys.stderr.write(gaiasql.query)
     sys.stderr.write('\n========\n')
 
+  ### Initialize list of stars that are in FOV
   rtn_stars = list()
 
+  ### Loop over stars
   while len(rtn_stars) < rtn_limit:
 
     minmag_row = dict(parallax=None
@@ -296,6 +215,84 @@ Keywords:
                          )
              ,stars=rtn_stars
              )
+
+
+########################################################################
+def do_main(argv):
+  """Process command line, the call gaiaif(...)"""
+
+  ######################################################################
+  ### Process command-line
+
+  fov_vertices = []
+
+  kwargs = dict()
+
+  for arg in argv:
+    ### - Loop over arguments
+
+    if arg.startswith('--limit='):
+      kwargs['rtn_limit'] = int(arg[8:])
+      continue
+
+    if arg.startswith('--mag-max='):
+      kwargs['mag_max'] = float(arg[10:])
+      continue
+
+    if arg.startswith('--mag-min='):
+      kwargs['mag_min'] = float(arg[10:])
+      continue
+
+    if arg.startswith('--mag-type='):
+      kwargs['mag_type'] = arg[11:].strip()
+      assert mag_type in mag_types,'Magnitude type argument [{0}] does not specify on of the set of allowed types {1}'.format(arg,mag_types)
+      continue
+
+    if arg.startswith('--gaia-sqlite3='):
+      kwargs['gaia_sl3'] = arg[15:]
+      assert gaia_sl3.endswith('.sqlite3'),'Gaia SQLite3 filepath argument [{0}] does not end in .sqlite3'.format(arg)
+      continue
+
+    if '--j2000' == arg:
+      kwargs['use_j2000'] = True
+      continue
+
+    if '--ppm' == arg:
+      kwargs['get_ppm'] = True
+      continue
+
+    if '--mags' == arg:
+      kwargs['get_mags'] = True
+      continue
+
+    if '--heavy' == arg:
+      kwargs['get_heavy'] = True
+      continue
+
+    if arg.startswith('--buffer='):
+      kwargs['radec_buffer'] = float(arg[9:])
+      sys.stderr.write('Warning:  RA,DEC buffer not yet implemented\n')
+      continue
+
+    if arg.startswith('--obspos='):
+      kwargs['obs_pos'] = list(map(float,arg[9:].split(',')))
+      continue
+
+    if arg.startswith('--obsvel='):
+      kwargs['obs_vel'] = list(map(float,arg[9:].split(',')))
+      continue
+
+    if arg.startswith('--obsy='):
+      kwargs['obs_year_arg'] = arg[7:]
+      continue
+
+    vertex = arg.split(',')
+    if 1==len(vertex): vertex = vertex.pop()
+    fov_vertices.append(vertex)
+
+    ### End of argument loop
+
+  return gaiaif(fov_vertices,**kwargs)
 
 
 
