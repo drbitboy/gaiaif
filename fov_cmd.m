@@ -119,9 +119,9 @@ try dotted.ppm                                              ;
 try dotted.j2000                                            ;
     pycmd = [ pycmd ' --j2000']                             ; catch end
 try pycmd = [ pycmd ' --limit=' num2str(dotted.limit)]      ; catch end
-try pycmd = [ pycmd ' --mag-max=' num2str(dotted.magmax)]   ; catch end
-try pycmd = [ pycmd ' --mag-min=' num2str(dotted.magmin)]   ; catch end
-try pycmd = [ pycmd ' --mag-type=' dotted.magtype]          ; catch end
+try pycmd = [ pycmd ' --magmax=' num2str(dotted.magmax)]    ; catch end
+try pycmd = [ pycmd ' --magmin=' num2str(dotted.magmin)]    ; catch end
+try pycmd = [ pycmd ' --magtype=' dotted.magtype]           ; catch end
 try pycmd = [ pycmd ' --gaia-sqlite3=' dotted.gaiasqlite3]  ; catch end
 try pycmd = [ pycmd ' --buffer=' num2str(dotted.buffer)]    ; catch end
 try pycmd = [ pycmd ' --obsy=' num2str(dotted.obsy)]        ; catch end
@@ -135,7 +135,7 @@ try pycmd = [ pycmd ' --obsy=' num2str(dotted.obsy)]        ; catch end
 
 [cmd_status,cmd_stdout] = system(pycmd);
 
-fprintf(1,'%s\n',cmd_stdout)
+%%%fprintf(1,'%s\n',cmd_stdout)
 
 return_object = loadjson(cmd_stdout);
 

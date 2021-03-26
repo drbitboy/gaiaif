@@ -39,9 +39,9 @@ Output (sys.stdout):
 Other options:
 
   --limit=200
-  --mag-max=MaximumMagnitude
-  --mag-min=MinimumMagnitude
-  --mag-type=g|bp|rp
+  --magmax=MaximumMagnitude
+  --magmin=MinimumMagnitude
+  --magtype=g|bp|rp
   --gaia-sqlite3=gaia.sqlite3 (default; also assumes gaia_heavy.sqlite3)
   --j2000 (FOV specified in inertial J2000 instead of ICRS)
   --buffer=pad (around convex FOV or RA,Dec box ;not yet implemented)
@@ -64,7 +64,7 @@ import gaiaif_util as gifu
 dpr = sp.dpr()
 
 ### Allowed magnitude types
-mag_types = set('g bp rp'.split())
+magtypes = set('g bp rp'.split())
 
 do_debug = 'DEBUG' in os.environ
 
@@ -72,12 +72,12 @@ do_debug = 'DEBUG' in os.environ
 ########################################################################
 def gaiaif(fov_vertices
           ,rtn_limit=200
-          ,mag_min=None,mag_max=None
+          ,magmin=None,magmax=None
           ,mag_type='g'
           ,radec_buffer=0.0   ### Not yet implemented
           ,gaia_sl3= 'gaia.sqlite3'
-          ,use_j2000=False
-          ,get_ppm=False,get_mags=False,get_heavy=False
+          ,j2000=False
+          ,ppm=False,mags=False,heavy=False
           ,obs_pos=None,obs_vel=None,obs_year_arg=None
           ,**kwargs
           ):
@@ -95,15 +95,15 @@ Sample usage:
 Keywords:
 
   ,rtn_limit=200
-  ,mag_max=MaximumMagnitude
-  ,mag_min=MinimumMagnitude
+  ,magmax=MaximumMagnitude
+  ,magmin=MinimumMagnitude
   ,mag_type='g'|'bp'|'rp'
   ,gaia_sl3='gaia.sqlite3'   Default; also assumes gaia_heavy.sqlite3
-  ,use_j2000=True            FOV is inertial J2000 instead of ICRS
+  ,j2000=True                FOV is inertial J2000 instead of ICRS
   ,buffer=pad                Pad around convex FOV;not yet implemented
-  ,get_ppm=True              Retrieve Parallax and Proper Motions
-  ,get_mags=True             Retrieve all magnitudes, phot_*_mean_mag
-  ,get_heavy                 Retrieve source_id, errors & corr. coeffs
+  ,ppm=True                  Retrieve Parallax and Proper Motions
+  ,mags=True                 Retrieve all magnitudes, phot_*_mean_mag
+  ,heavy                     Retrieve source_id, errors & corr. coeffs
   ,obspos=[X,Y,Z]            Obs posn, km, triggers parallax correction
   ,obsvel=[VX,VY,VZ]         Obs vel, km/s, triggers stellar aberration
   ,obs_year_arg=YYYY.ddd     Obs time, fractional year, triggers PM
@@ -139,9 +139,9 @@ Keywords:
 
   ### Will need gaialight table if either proper motions were requested,
   ### or if either parallax or proper motion corrections were requested
-  get_ppm_final = get_ppm or not ((None,None,) == (obs_pos,obs_year,))
-  gaiasqls = [GAIASQL(gaia_sl3,mag_min,mag_max,mag_type
-                     ,get_ppm_final,get_mags,get_heavy
+  ppm_final = ppm or not ((None,None,) == (obs_pos,obs_year,))
+  gaiasqls = [GAIASQL(gaia_sl3,magmin,magmax,mag_type
+                     ,ppm_final,mags,heavy
                      ,*radeclims
                      )
               for radeclims in fov.get_radec_boxes()
@@ -197,15 +197,15 @@ Keywords:
     minmag_gsql.cursor_next()
 
   return dict(config=dict(limit=rtn_limit
-                         ,mag_min=mag_min
-                         ,mag_max=mag_max
+                         ,magmin=magmin
+                         ,magmax=magmax
                          ,mag_type=mag_type
                          ,radec_buffer=radec_buffer
                          ,gaia_sl3=gaia_sl3
-                         ,use_j2000=use_j2000
-                         ,get_ppm=get_ppm
-                         ,get_mags=get_mags
-                         ,get_heavy=get_heavy
+                         ,j2000=j2000
+                         ,ppm=ppm
+                         ,mags=mags
+                         ,heavy=heavy
                          ,obs_pos=obs_pos
                          ,obs_vel=obs_vel
                          ,obs_year=obs_year
@@ -235,17 +235,17 @@ def do_main(argv):
       kwargs['rtn_limit'] = int(arg[8:])
       continue
 
-    if arg.startswith('--mag-max='):
-      kwargs['mag_max'] = float(arg[10:])
+    if arg.startswith('--magmax='):
+      kwargs['magmax'] = float(arg[9:])
       continue
 
-    if arg.startswith('--mag-min='):
-      kwargs['mag_min'] = float(arg[10:])
+    if arg.startswith('--magmin='):
+      kwargs['magmin'] = float(arg[9:])
       continue
 
-    if arg.startswith('--mag-type='):
-      kwargs['mag_type'] = arg[11:].strip()
-      assert mag_type in mag_types,'Magnitude type argument [{0}] does not specify on of the set of allowed types {1}'.format(arg,mag_types)
+    if arg.startswith('--magtype='):
+      kwargs['magtype'] = arg[10:].strip()
+      assert kwargs['magtype'] in magtypes,'Magnitude type argument [{0}] does not specify on of the set of allowed types {1}'.format(arg,magtypes)
       continue
 
     if arg.startswith('--gaia-sqlite3='):
@@ -254,19 +254,19 @@ def do_main(argv):
       continue
 
     if '--j2000' == arg:
-      kwargs['use_j2000'] = True
+      kwargs['j2000'] = True
       continue
 
     if '--ppm' == arg:
-      kwargs['get_ppm'] = True
+      kwargs['ppm'] = True
       continue
 
     if '--mags' == arg:
-      kwargs['get_mags'] = True
+      kwargs['mags'] = True
       continue
 
     if '--heavy' == arg:
-      kwargs['get_heavy'] = True
+      kwargs['heavy'] = True
       continue
 
     if arg.startswith('--buffer='):
@@ -299,20 +299,20 @@ def do_main(argv):
 
 ########################################################################
 class GAIASQL(object):
-  def __init__(self,gaia_sl3,lomag,himag,mag_type
-              ,get_ppm,get_mags,get_heavy
+  def __init__(self,gaia_sl3,lomag,himag,magtype
+              ,ppm,mags,heavy
               ,ralo,rahi,declo,dechi
               ):
     self.gaia_sl3 = gaia_sl3
     self.gaia_heavy_sl3 = '{0}_heavy.sqlite3'.format(gaia_sl3[:-8])
-    (self.lomag,self.himag,self.mag_type
-    ,self.get_ppm,self.get_mags,self.get_heavy
+    (self.lomag,self.himag,self.magtype
+    ,self.ppm,self.mags,self.heavy
     ,self.ralo,self.rahi,self.declo,self.dechi
-    ,) = (lomag,himag,mag_type
-         ,get_ppm,get_mags,get_heavy
+    ,) = (lomag,himag,magtype
+         ,ppm,mags,heavy
          ,ralo,rahi,declo,dechi
          ,)
-    assert self.mag_type in mag_types
+    assert self.magtype in magtypes
 
     self.query_parameters = dict(lomag=self.lomag
                                 ,himag=self.himag
@@ -321,22 +321,22 @@ class GAIASQL(object):
                                 ,declo=self.declo
                                 ,dechi=self.dechi
                                 )
-    ppm_columns = self.get_ppm and """
+    ppm_columns = self.ppm and """
       ,gaialight.parallax
       ,gaialight.pmra
       ,gaialight.pmdec""" or ''
 
-    mags_columns = self.get_mags and """
+    mags_columns = self.mags and """
       ,gaialight.phot_g_mean_mag
       ,gaialight.phot_bp_mean_mag
       ,gaialight.phot_rp_mean_mag""" or ''
 
-    heavy_join = self.get_heavy and """
+    heavy_join = self.heavy and """
 INNER JOIN dbheavy.gaiaheavy
  ON gaiartree.idoffset=dbheavy.gaiaheavy.idoffset
 """ or ''
 
-    heavy_columns = self.get_heavy and """
+    heavy_columns = self.heavy and """
       ,gaiaheavy.source_id
       ,gaiaheavy.ra_error
       ,gaiaheavy.dec_error
@@ -376,7 +376,7 @@ WHERE gaiartree.ralo <= :rahi
 ORDER BY phot_{0}_mean_mag
 
 ;
-""".format(self.mag_type
+""".format(self.magtype
           ,'{extra_join_light_on}'
           ,'{extra_mag_limits}'
           ,ppm_columns
@@ -390,15 +390,15 @@ ORDER BY phot_{0}_mean_mag
       self.extra_mag_limits = ''
     else:
       self.extra_join_light_on = """AND gaiartree.himag >= :lomag\n"""
-      self.extra_mag_limits = """  AND gaialight.phot_{0}_mean_mag >= :lomag\n""".format(self.mag_type)
+      self.extra_mag_limits = """  AND gaialight.phot_{0}_mean_mag >= :lomag\n""".format(self.magtype)
 
     if not (None is self.himag):
       self.extra_join_light_on += """AND gaiartree.lomag <= :himag\n"""
-      self.extra_mag_limits += """  AND gaialight.phot_{0}_mean_mag <= :himag\n""".format(self.mag_type)
+      self.extra_mag_limits += """  AND gaialight.phot_{0}_mean_mag <= :himag\n""".format(self.magtype)
 
     self.query = self.query0.format(**vars(self))
     self.cursor = sl3.connect(self.gaia_sl3).cursor()
-    if self.get_heavy:
+    if self.heavy:
       self.cursor.execute("""ATTACH '{0}' as dbheavy""".format(self.gaia_heavy_sl3))
     self.cursor.execute(self.query,self.query_parameters)
     self.column_names = [descs[0] for descs in self.cursor.description]

@@ -89,7 +89,7 @@ if "__main__" == __name__:
   if '--test-gaia' in sys.argv[1:]:
 
     ### Make similar query local data from SQLite3 database (DB)
-    sl3_data = fov_cmd.do_main('1,2 2.9 --mag-type=g --limit=2 --obsy=2016.5'.split())
+    sl3_data = fov_cmd.do_main('1,2 2.9 --magtype=g --limit=2 --obsy=2016.5'.split())
 
     ### Get GENERIC class instances from each
     tap_stars,sl3_stars = [d['stars'] for d in (tap_data,sl3_data,)]
