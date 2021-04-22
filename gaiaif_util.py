@@ -41,7 +41,9 @@ Attributes
   ,) = 'circle radecbox polygon'.split()
 
   ######################################################################
-  def __init__(self,fovraws,obs_pos=None,obs_vel=None,obs_year=None):
+  def __init__(self,fovraws,ralohi=(),declohi=()
+              ,obs_pos=None,obs_vel=None,obs_year=None
+              ):
     """Convert FOV definition in external inertial reference frame to an
 FOV definition in a local reference frame; also determine RA,Dec limits
 of FOV for use in star catalog lookup.
@@ -71,19 +73,26 @@ Arguments
             - For stellar aberration correction
 
 """
-    ### Get count of items in argument sequence; ensure it is 2 or more
+    ### Get count of items in FOV sequence; ensure it is 2 or more
+    ### and ralohi and declohi are empty, or that fovraws is empty
+    ### and ralohi and declohi have 2 values each
     (self.fovraws
+    ,self.ralohi
+    ,self.declohi
     ,self.obs_pos
     ,self.obs_vel
     ,self.obs_year
-    ,)= fovraws,obs_pos,obs_vel,obs_year
+    ,)= fovraws,list(ralohi),list(declohi),obs_pos,obs_vel,obs_year
     self.L = len(fovraws)
-    assert 1<self.L, 'Too few vertices in FOV'
+    assert (1<self.L and not (self.ralohi+self.declohi)
+      ) or (0==self.L and 2==len(self.ralohi) and 2==len(self.declohi)
+      ), 'Invalid vertices in FOV'
 
     ################################
     ### Initialize:  FOV RA,Dec pairs; FOV type (assume polygon); FOV
     ###              vector triples; list of RA,Dec boxes
-    self.radecdegs,self.fovtype = list(),FOV.POLYGONTYPE
+    self.radecdegs = list()
+    self.fovtype = 1<self.L and FOV.POLYGONTYPE or FOV.RADECBOXTYPE
     self.uvfovxyzs,fovsum = list(),sp.vpack(0.,0.,0.)
     self.radec_boxes = list()
     rdba = self.radec_boxes.append   ### Shorthand to append box to list
@@ -131,14 +140,21 @@ Arguments
 
     if self.fovtype == FOV.RADECBOXTYPE:
       ### RA,DEC box FOV:  calculate limits; handle PM crossing
-      ras,decs = zip(*self.radecdegs)
-      ralo,rahi = sorted(ras)
-      declo,dechi = sorted(decs)
-      if 180 > (rahi-ralo):
-        rdba([ralo,rahi,declo,dechi])
+      if 2==self.L:
+        ras,decs = zip(*self.radecdegs)
+        ralo,rahi = sorted(ras)
+        declo,dechi = sorted(decs)
+        if 180 > (rahi-ralo):
+          rdba([ralo,rahi,declo,dechi])
+        else:
+          rdba([0.0,ralo,declo,dechi])
+          rdba([rahi,360.0,declo,dechi])
       else:
-        rdba([0.0,ralo,declo,dechi])
-        rdba([rahi,360.0,declo,dechi])
+        if self.ralohi[1] > self.ralohi[0]:
+          rdba(self.ralohi+self.declohi)
+        else:
+          rdba([self.ralohi[0],360.0]+self.declohi)
+          rdba([0.0,self.ralohi[1]]+self.declohi)
 
     elif self.fovtype == FOV.CIRCLETYPE:
       ### Circular FOV:  DEC limits determine RA limits; handle PM Xing
@@ -408,7 +424,9 @@ Arguments
       self.v_for_parallax = None
 
   ########################################################################
-  def __repr__(self): return str(self.fovraws)
+  def __repr__(self):
+      if 1<self.L: return str(self.fovraws)
+      return str(dict(ralohi=self.ralohi,declohi=self.declohi))
 
   ########################################################################
   def star_in_fov(self

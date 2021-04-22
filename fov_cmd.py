@@ -5,8 +5,11 @@ Usage (Python; see gaiaif(...) below):
   import fov_cmd
   fov_cmd([[RA0,Dec0,],[RA1,Dec1]])  ### Simple RA,DEC window
   fov_cmd([[RA0,DEC0,],halfang)      ### Conical FOV, .3deg half-angle
+  fov_cmd([[RAlo,RAhi],[DEClo,DEChi] ### Simple RA,DEC window II*
   fov_cmd([[RA0,Dec0],[RA1,Dec1]
           ,...,[RAn,Decn])           ### Polygonal FOV
+
+  ### * RAlo may be greater than RAhi, so range goes through 360/0
 
 Usage (BASH):
 
@@ -32,12 +35,24 @@ Usage (BASH):
   - N.B. not a real geometric FOV
 
 
+  python fov_cmd.py --RAlo,RAhi --DEClo,DEChi
+
+  - RA,Dec box
+  - RA,Dec values in degrees; 0<=RA<360; -90<=Dec<=+90.
+  - if RAlo < RAhi, then range is [RAlo:RAhi]
+  - if RAlo >= RAhi, then range is [RAlo:360] and [0:RAhi]
+  - DEClo < DEChi
+  - N.B. not a real geometric FOV
+
+
 Output (sys.stdout):
 
   JSON formatted array, one star per element, by decreasing magnitude
 
 Other options:
 
+  --ralohi=RAlo,RAhi          ### N.B. RAn,DECn not allowed
+  --declohi=DEClo,DEChi       ### N.B. required if --ralohi=... used
   --limit=200
   --magmax=MaximumMagnitude
   --magmin=MinimumMagnitude
@@ -79,6 +94,8 @@ def gaiaif(fov_vertices
           ,j2000=False
           ,ppm=False,mags=False,heavy=False
           ,obs_pos=None,obs_vel=None,obs_year_arg=None
+          ,ralohi=[]
+          ,declohi=[]
           ,**kwargs
           ):
   """
@@ -135,6 +152,8 @@ Keywords:
                 ,obs_pos=obs_pos
                 ,obs_vel=obs_vel
                 ,obs_year=obs_year
+                ,ralohi=ralohi
+                ,declohi=declohi
                 )
 
   ### Will need gaialight table if either proper motions were requested,
@@ -212,6 +231,8 @@ Keywords:
                          ,obs_year_arg=obs_year_arg
                          ,fov_vertices=fov_vertices
                          ,fov_type=fov.fovtype
+                         ,ralohi=fov.ralohi
+                         ,declohi=fov.declohi
                          )
              ,stars=rtn_stars
              )
@@ -230,6 +251,14 @@ def do_main(argv):
 
   for arg in argv:
     ### - Loop over arguments
+
+    if arg.startswith('--ralohi='):
+      kwargs['ralohi'] = (ralo,rahi,) = list(map(float,arg[9:].split(',')))
+      continue
+
+    if arg.startswith('--declohi='):
+      kwargs['declohi'] = (declo,dechi,) = list(map(float,arg[10:].split(',')))
+      continue
 
     if arg.startswith('--limit='):
       kwargs['rtn_limit'] = int(arg[8:])
