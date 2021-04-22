@@ -90,7 +90,7 @@ def gaiaif(fov_vertices
           ,magmin=None,magmax=None
           ,mag_type='g'
           ,radec_buffer=0.0   ### Not yet implemented
-          ,gaia_sl3= 'gaia.sqlite3'
+          ,gaia_sl3='gaia.sqlite3'
           ,j2000=False
           ,ppm=False,mags=False,heavy=False
           ,obs_pos=None,obs_vel=None,obs_year_arg=None
@@ -278,8 +278,8 @@ def do_main(argv):
       continue
 
     if arg.startswith('--gaia-sqlite3='):
+      assert arg.endswith('.sqlite3'),'Gaia SQLite3 filepath argument [{0}] does not end in .sqlite3'.format(arg)
       kwargs['gaia_sl3'] = arg[15:]
-      assert gaia_sl3.endswith('.sqlite3'),'Gaia SQLite3 filepath argument [{0}] does not end in .sqlite3'.format(arg)
       continue
 
     if '--j2000' == arg:

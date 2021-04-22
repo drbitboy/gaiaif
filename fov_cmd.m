@@ -5,11 +5,18 @@
 %%%
 %%%   -- Required --
 %%%
+%%%   Either arg.fov:
+%%%
 %%%   arg.fov={{1,2},{2,3},{2,1},...};  % Polygonal FOV with RA,Dec vertices, deg
 %%%   arg.fov={{1,2},1};                % Circular FOV, center at RA=1deg, Dec=2deg; Radius =1deg;
 %%%   arg.fov={{1,2},{2,3}};            % RA,Dec box (not a real FOV)
 %%%                                     % N.B. {x,y,z} may also be used instead of any {RA,Dec}
 %%%                                     % N.B. ICRS (default) or J2000l see arg.j2000 below
+%%%
+%%%   XOR BOTH arg.ralohi AND arg.declohi:
+%%%
+%%%   arg.ralohi={RA1,RA2};             % RA limits for RA,Dec box; go through PM if RA1 >= RA2
+%%%   arg.declohi={Dec1,Dec2};          % Dec limits for RA,Dec box; Dec1 < Dec2 is required
 %%%
 %%%   -- Optional --
 %%%
@@ -96,17 +103,46 @@ function return_object = fov_cmd(dotted)
 %%% Build Python script command
 
 %%% - Required field, .fov
+try
+  dotted.fov;
+  assert(1<length(dotted.fov{1,1}))
+  usefov = 1;
+  try dottec.ralohi; usefov=2; catch end
+  try dottec.declohi; usefov=2; catch end
+catch
+  assert(2==length(dotted.ralohi))
+  assert(2==length(dotted.declohi))
+  usefov = 0;
+  try dotted.fov; usefov=2; catch end
+end
+
+assert(2>usefov);
+
 pycmd = 'python fov_cmd.py';
-for arg=dotted.fov;
-  delim = ' ';
-  for val=arg{1,1}
-    try
-      pycmd=[pycmd delim num2str(val{1,1})];
-    catch
-      pycmd=[pycmd delim num2str(val(1))];
+if usefov ;
+  for arg=dotted.fov;
+    delim = ' ';
+    for val=arg{1,1}
+      try
+        pycmd=[pycmd delim num2str(val{1,1})];
+      catch
+        pycmd=[pycmd delim num2str(val(1))];
+      end
+      delim=',';
     end
+  end
+else
+  delim = ' --ralohi=';
+  for num=dotted.ralohi;
+    pycmd=[pycmd delim num2str(num{1,1})];
     delim=',';
   end
+  delim = ' --declohi=';
+  for num=dotted.declohi;
+    pycmd=[pycmd delim num2str(num{1,1})];
+    delim=',';
+  end
+  pycmd
 end
 
 %%% - Optional fields
